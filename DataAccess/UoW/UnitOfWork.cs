@@ -16,6 +16,9 @@ public class UnitOfWork : IUnitOfWork
     public IBlogLikeRepository BlogLikes { get; private set; }
     public IBlogCommentRepository BlogComments { get; private set; }
     public IRefreshTokenRepository RefreshTokens { get; private set; }
+    public ILanguageRepository Languages { get; private set; }
+    public ILocalizationRepository Localizations { get; private set; }
+    public ILocalizationLanguageDetailRepository LocalizationLanguageDetails { get; private set; }
     #endregion
 
 
@@ -26,7 +29,10 @@ public class UnitOfWork : IUnitOfWork
         ICategoryRepository categoryRepository,
         IBlogLikeRepository blogLikeRepository,
         IBlogCommentRepository blogCommentRepository,
-        IRefreshTokenRepository refreshTokens
+        IRefreshTokenRepository refreshTokens,
+        ILanguageRepository languages,
+        ILocalizationRepository localizations,
+        ILocalizationLanguageDetailRepository localizationLanguageDetails
     ){
         _context = context;
         Users = userRepository;
@@ -35,6 +41,9 @@ public class UnitOfWork : IUnitOfWork
         BlogLikes = blogLikeRepository;
         BlogComments = blogCommentRepository;
         RefreshTokens = refreshTokens;
+        Languages = languages;
+        Localizations = localizations;
+        LocalizationLanguageDetails = localizationLanguageDetails;
     }
 
 

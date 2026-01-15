@@ -128,6 +128,7 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
 
         return query.Any();
     }
+
     public int Count(Filter? filter = null, Expression<Func<TEntity, bool>>? where = null, bool ignoreFilters = false)
     {
         var query = _context.Set<TEntity>().AsQueryable();
@@ -160,7 +161,7 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (!tracking) query = query.AsNoTracking();
 
-        return query.SingleOrDefault();
+        return query.FirstOrDefault();
     }
 
     public TResult? Get<TResult>(
@@ -185,7 +186,18 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (!tracking) query = query.AsNoTracking();
 
-        return query.Select(select).SingleOrDefault();
+        if (typeof(ILocalizableEntity).IsAssignableFrom(typeof(TEntity)))
+        {
+            var entity = query.FirstOrDefault();
+
+            var selector = select.Compile();
+            if (entity == null) return default;
+            return selector(entity);
+        }
+        else
+        {
+            return  query.Select(select).FirstOrDefault();
+        }
     }
 
     public TResult? Get<TResult>(
@@ -211,7 +223,33 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (!tracking) query = query.AsNoTracking();
 
-        return query.ProjectTo<TResult>(configurationProvider).SingleOrDefault();
+        return query.ProjectTo<TResult>(configurationProvider).FirstOrDefault();
+    }
+
+    public TResult? Get<TResult>(
+        IMapper mapper,
+        Filter? filter = null,
+        IEnumerable<Sort>? sorts = null,
+        Expression<Func<TEntity, bool>>? where = null,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
+        bool ignoreFilters = false,
+        bool tracking = false
+    )
+    {
+        var query = _context.Set<TEntity>().AsQueryable();
+
+        if (where != null) query = query.Where(where);
+        if (filter != null) query = query.ToFilter(filter);
+        if (orderBy != null) query = orderBy(query);
+        if (sorts != null) query = query.ToSort(sorts);
+        if (include != null) query = include(query);
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
+        if (!tracking) query = query.AsNoTracking();
+
+        var entity = query.FirstOrDefault();
+
+        return mapper.Map<TResult>(entity);
     }
     #endregion
 
@@ -260,7 +298,16 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (!tracking) query = query.AsNoTracking();
 
-        return query.Select(select).ToList();
+        if (typeof(ILocalizableEntity).IsAssignableFrom(typeof(TEntity)))
+        {
+            var entities = query.ToList();
+            var selector = select.Compile();
+            return entities.Select(selector).ToList();
+        }
+        else
+        {
+            return query.Select(select).ToList();
+        }
     }
 
     public ICollection<TResult>? GetAll<TResult>(
@@ -286,6 +333,31 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         if (!tracking) query = query.AsNoTracking();
 
         return query.ProjectTo<TResult>(configurationProvider).ToList();
+    }
+
+    public ICollection<TResult>? GetAll<TResult>(
+        IMapper mapper,
+        Filter? filter = null,
+        IEnumerable<Sort>? sorts = null,
+        Expression<Func<TEntity, bool>>? where = null,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
+        bool ignoreFilters = false,
+        bool tracking = false)
+    {
+        var query = _context.Set<TEntity>().AsQueryable();
+
+        if (where != null) query = query.Where(where);
+        if (filter != null) query = query.ToFilter(filter);
+        if (orderBy != null) query = orderBy(query);
+        if (sorts != null) query = query.ToSort(sorts);
+        if (include != null) query = include(query);
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
+        if (!tracking) query = query.AsNoTracking();
+
+        var entities = query.ToList();
+
+        return mapper.Map<ICollection<TResult>>(entities);
     }
     #endregion
 
@@ -624,7 +696,7 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (!tracking) query = query.AsNoTracking();
 
-        return await query.SingleOrDefaultAsync(cancellationToken);
+        return await query.FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<TResult?> GetAsync<TResult>(
@@ -650,7 +722,18 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (!tracking) query = query.AsNoTracking();
 
-        return await query.Select(select).SingleOrDefaultAsync(cancellationToken);
+        if (typeof(ILocalizableEntity).IsAssignableFrom(typeof(TEntity)))
+        {
+            var entity = await query.FirstOrDefaultAsync(cancellationToken);
+
+            var selector = select.Compile();
+            if (entity == null) return default;
+            return selector(entity);
+        }
+        else
+        {
+            return await query.Select(select).FirstOrDefaultAsync(cancellationToken);
+        }
     }
 
     public async Task<TResult?> GetAsync<TResult>(
@@ -677,7 +760,33 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (!tracking) query = query.AsNoTracking();
 
-        return await query.ProjectTo<TResult>(configurationProvider).SingleOrDefaultAsync(cancellationToken);
+        return await query.ProjectTo<TResult>(configurationProvider).FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<TResult?> GetAsync<TResult>(
+        IMapper mapper,
+        Filter? filter = null,
+        IEnumerable<Sort>? sorts = null,
+        Expression<Func<TEntity, bool>>? where = null,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
+        bool ignoreFilters = false,
+        bool tracking = false,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var query = _context.Set<TEntity>().AsQueryable();
+
+        if (where != null) query = query.Where(where);
+        if (filter != null) query = query.ToFilter(filter);
+        if (orderBy != null) query = orderBy(query);
+        if (sorts != null) query = query.ToSort(sorts);
+        if (include != null) query = include(query);
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
+        if (!tracking) query = query.AsNoTracking();
+
+        var entity =  await query.FirstOrDefaultAsync(cancellationToken);
+        return mapper.Map<TResult>(entity);
     }
     #endregion
 
@@ -728,7 +837,16 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (!tracking) query = query.AsNoTracking();
 
-        return await query.Select(select).ToListAsync(cancellationToken);
+        if (typeof(ILocalizableEntity).IsAssignableFrom(typeof(TEntity)))
+        {
+            var entities = await query.ToListAsync();
+            var selector = select.Compile();
+            return entities.Select(selector).ToList();
+        }
+        else
+        {
+            return await query.Select(select).ToListAsync();
+        }
     }
 
     public async Task<ICollection<TResult>?> GetAllAsync<TResult>(
@@ -756,6 +874,33 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         if (!tracking) query = query.AsNoTracking();
 
         return await query.ProjectTo<TResult>(configurationProvider).ToListAsync(cancellationToken);
+    }
+
+    public async Task<ICollection<TResult>?> GetAllAsync<TResult>(
+        IMapper mapper,
+        Filter? filter = null,
+        IEnumerable<Sort>? sorts = null,
+        Expression<Func<TEntity, bool>>? where = null,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
+        bool ignoreFilters = false,
+        bool tracking = false,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var query = _context.Set<TEntity>().AsQueryable();
+
+        if (where != null) query = query.Where(where);
+        if (filter != null) query = query.ToFilter(filter);
+        if (orderBy != null) query = orderBy(query);
+        if (sorts != null) query = query.ToSort(sorts);
+        if (include != null) query = include(query);
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
+        if (!tracking) query = query.AsNoTracking();
+         
+        var entities = await query.ToListAsync(cancellationToken);
+
+        return mapper.Map<ICollection<TResult>>(entities);
     }
     #endregion
 

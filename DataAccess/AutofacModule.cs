@@ -40,5 +40,20 @@ public class AutofacModule : Module
             .EnableInterfaceInterceptors()
             .InterceptedBy(typeof(DataAccessExceptionHandlerInterceptor))
             .InstancePerLifetimeScope();
+                    
+        builder.RegisterType<LanguageRepository>().As<ILanguageRepository>()
+            .EnableInterfaceInterceptors()
+            .InterceptedBy(typeof(DataAccessExceptionHandlerInterceptor))
+            .InstancePerLifetimeScope();
+
+        builder.RegisterType<LocalizationRepository>().As<ILocalizationRepository>()
+            .EnableInterfaceInterceptors()
+            .InterceptedBy(typeof(DataAccessExceptionHandlerInterceptor))
+            .InstancePerLifetimeScope();
+
+        builder.RegisterType<LocalizationLanguageDetailRepository>().As<ILocalizationLanguageDetailRepository>()
+            .EnableInterfaceInterceptors()
+            .InterceptedBy(typeof(DataAccessExceptionHandlerInterceptor))
+            .InstancePerLifetimeScope();
     }
 }

@@ -72,7 +72,19 @@ public interface IRepositoryAsync<TEntity> where TEntity : IEntity
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
         bool tracking = false,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
+    Task<TResult?> GetAsync<TResult>(
+        IMapper mapper,
+        Filter? filter = null,
+        IEnumerable<Sort>? sorts = null,
+        Expression<Func<TEntity, bool>>? where = null,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
+        bool ignoreFilters = false,
+        bool tracking = false,
+        CancellationToken cancellationToken = default
+    );
     #endregion
 
     #region GetAll
@@ -99,6 +111,17 @@ public interface IRepositoryAsync<TEntity> where TEntity : IEntity
     );
     Task<ICollection<TResult>?> GetAllAsync<TResult>(
         IConfigurationProvider configurationProvider,
+        Filter? filter = null,
+        IEnumerable<Sort>? sorts = null,
+        Expression<Func<TEntity, bool>>? where = null,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
+        bool ignoreFilters = false,
+        bool tracking = false,
+        CancellationToken cancellationToken = default
+    );
+    Task<ICollection<TResult>?> GetAllAsync<TResult>(
+        IMapper mapper,
         Filter? filter = null,
         IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,

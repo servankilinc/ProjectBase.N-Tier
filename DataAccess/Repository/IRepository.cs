@@ -70,6 +70,16 @@ public interface IRepository<TEntity> where TEntity : IEntity
         bool ignoreFilters = false,
         bool tracking = false
     );
+    TResult? Get<TResult>(
+        IMapper mapper,
+        Filter? filter = null,
+        IEnumerable<Sort>? sorts = null,
+        Expression<Func<TEntity, bool>>? where = null,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
+        bool ignoreFilters = false,
+        bool tracking = false
+    );
     #endregion
 
     #region GetAll
@@ -102,6 +112,15 @@ public interface IRepository<TEntity> where TEntity : IEntity
         bool ignoreFilters = false,
         bool tracking = false
     );
+    ICollection<TResult>? GetAll<TResult>(
+        IMapper mapper,
+        Filter? filter = null,
+        IEnumerable<Sort>? sorts = null, Expression<Func<TEntity, bool>>? where = null,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
+        bool ignoreFilters = false,
+        bool tracking = false
+     );
     #endregion
 
     #region Datatable Server-Side
