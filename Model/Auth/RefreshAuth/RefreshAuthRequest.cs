@@ -14,6 +14,6 @@ public class RefreshAuthRequestValidator : AbstractValidator<RefreshAuthRequest>
     public RefreshAuthRequestValidator()
     {
         RuleFor(b => b.UserId).NotNull().NotEqual(Guid.Empty).NotEmpty();
-        When(b => b.IsTrusted, () => RuleFor(b => b.RefreshToken).NotNull().NotEmpty());
+        When(b => !b.IsTrusted, () => RuleFor(b => b.RefreshToken).NotNull().NotEmpty());
     }
 }
