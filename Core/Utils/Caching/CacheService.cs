@@ -33,8 +33,8 @@ public class CacheService : ICacheService
 
         DistributedCacheEntryOptions cacheEntryOptions = new DistributedCacheEntryOptions()
         {
-            SlidingExpiration = TimeSpan.FromDays(1),
-            AbsoluteExpiration = DateTime.UtcNow.AddDays(2)
+            SlidingExpiration = TimeSpan.FromHours(2),
+            AbsoluteExpiration = DateTime.UtcNow.AddMinutes(30)
         };
 
         string serializedData = JsonConvert.SerializeObject(data, new JsonSerializerSettings
