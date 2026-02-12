@@ -11,9 +11,6 @@ public interface IUnitOfWork : IDisposable, IAsyncDisposable
     IBlogCommentRepository BlogComments { get; }
     IBlogLikeRepository BlogLikes { get; }
     IRefreshTokenRepository RefreshTokens { get; }
-    ILanguageRepository Languages { get; }
-    ILocalizationRepository Localizations { get; }
-    ILocalizationLanguageDetailRepository LocalizationLanguageDetails { get; }
     #endregion
 
 

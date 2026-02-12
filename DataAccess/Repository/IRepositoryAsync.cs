@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Core.BaseRequestModels;
 using Core.Model;
 using Core.Utils.Datatable;
 using Core.Utils.DynamicQuery;
@@ -12,12 +13,12 @@ public interface IRepositoryAsync<TEntity> where TEntity : IEntity
 {
     #region Add
     Task<TEntity> AddAndSaveAsync(TEntity entity, CancellationToken cancellationToken = default);
-    Task<List<TEntity>> AddAndSaveAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
+    Task<ICollection<TEntity>> AddAndSaveAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
     #endregion
 
     #region Update
     Task<TEntity> UpdateAndSaveAsync(TEntity entity, CancellationToken cancellationToken = default);
-    Task<List<TEntity>> UpdateAndSaveAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
+    Task<ICollection<TEntity>> UpdateAndSaveAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
     #endregion
 
     #region Delete
@@ -60,7 +61,6 @@ public interface IRepositoryAsync<TEntity> where TEntity : IEntity
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
-        bool tracking = false,
         CancellationToken cancellationToken = default
     );
     Task<TResult?> GetAsync<TResult>(
@@ -71,18 +71,6 @@ public interface IRepositoryAsync<TEntity> where TEntity : IEntity
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
-        bool tracking = false,
-        CancellationToken cancellationToken = default
-    );
-    Task<TResult?> GetAsync<TResult>(
-        IMapper mapper,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
-        Expression<Func<TEntity, bool>>? where = null,
-        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-        bool ignoreFilters = false,
-        bool tracking = false,
         CancellationToken cancellationToken = default
     );
     #endregion
@@ -106,7 +94,6 @@ public interface IRepositoryAsync<TEntity> where TEntity : IEntity
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
-        bool tracking = false,
         CancellationToken cancellationToken = default
     );
     Task<ICollection<TResult>?> GetAllAsync<TResult>(
@@ -117,27 +104,13 @@ public interface IRepositoryAsync<TEntity> where TEntity : IEntity
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
-        bool tracking = false,
-        CancellationToken cancellationToken = default
-    );
-    Task<ICollection<TResult>?> GetAllAsync<TResult>(
-        IMapper mapper,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
-        Expression<Func<TEntity, bool>>? where = null,
-        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-        bool ignoreFilters = false,
-        bool tracking = false,
         CancellationToken cancellationToken = default
     );
     #endregion
 
     #region Datatable Server-Side
     Task<DatatableResponseServerSide<TEntity>> DatatableServerSideAsync(
-        DatatableRequest datatableRequest,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
@@ -145,10 +118,8 @@ public interface IRepositoryAsync<TEntity> where TEntity : IEntity
         CancellationToken cancellationToken = default
     );
     Task<DatatableResponseServerSide<TResult>> DatatableServerSideAsync<TResult>(
-        DatatableRequest datatableRequest,
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, TResult>> select,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
@@ -156,10 +127,8 @@ public interface IRepositoryAsync<TEntity> where TEntity : IEntity
         CancellationToken cancellationToken = default
     );
     Task<DatatableResponseServerSide<TResult>> DatatableServerSideAsync<TResult>(
-        DatatableRequest datatableRequest,
+        DynamicDatatableRequest datatableRequest,
         IConfigurationProvider configurationProvider,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
@@ -170,8 +139,7 @@ public interface IRepositoryAsync<TEntity> where TEntity : IEntity
 
     #region Datatable Client-Side
     Task<DatatableResponseClientSide<TEntity>> DatatableClientSideAsync(
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
@@ -179,9 +147,8 @@ public interface IRepositoryAsync<TEntity> where TEntity : IEntity
         CancellationToken cancellationToken = default
     );
     Task<DatatableResponseClientSide<TResult>> DatatableClientSideAsync<TResult>(
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, TResult>> select,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
@@ -189,9 +156,8 @@ public interface IRepositoryAsync<TEntity> where TEntity : IEntity
         CancellationToken cancellationToken = default
     );
     Task<DatatableResponseClientSide<TResult>> DatatableClientSideAsync<TResult>(
+        DynamicDatatableRequest datatableRequest,
         IConfigurationProvider configurationProvider,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
@@ -202,9 +168,7 @@ public interface IRepositoryAsync<TEntity> where TEntity : IEntity
 
     #region Pagination
     Task<PaginationResponse<TEntity>> PaginationAsync(
-        PaginationRequest paginationRequest,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+        DynamicPaginationRequest paginationRequest,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
@@ -212,10 +176,8 @@ public interface IRepositoryAsync<TEntity> where TEntity : IEntity
         CancellationToken cancellationToken = default
     );
     Task<PaginationResponse<TResult>> PaginationAsync<TResult>(
-        PaginationRequest paginationRequest,
+        DynamicPaginationRequest paginationRequest,
         Expression<Func<TEntity, TResult>> select,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
@@ -223,15 +185,17 @@ public interface IRepositoryAsync<TEntity> where TEntity : IEntity
         CancellationToken cancellationToken = default
     );
     Task<PaginationResponse<TResult>> PaginationAsync<TResult>(
-        PaginationRequest paginationRequest,
+        DynamicPaginationRequest paginationRequest,
         IConfigurationProvider configurationProvider,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
         CancellationToken cancellationToken = default
     );
+    #endregion
+
+    #region SaveChanges
+    Task SaveChangesAsync();
     #endregion
 }

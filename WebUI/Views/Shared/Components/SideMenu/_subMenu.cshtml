@@ -25,9 +25,9 @@
 			isActive = isThereSubs && item.SubMenuItems!.Any(f => f.Path == _basePath_);
 
 			<li class="menu-item @(isActive ? "active open" : string.Empty)">
-				<span role="button" class="menu-link @(isActive ? "active" : string.Empty) @(isThereSubs ? "menu-toggle" : string.Empty)">
+				<span role="button" class="menu-link @(isActive ? "active" : string.Empty) @(isThereSubs ? "menu-toggle" : string.Empty)" data-icon="@item.Icon">
 					<i class="menu-icon @item.Icon"></i>
-					<div>@item.Title</div>
+					<span class="page-name">@item.Title</span>
 				</span>
 				@if (isThereSubs)
 				{
@@ -40,9 +40,9 @@
 			isActive = item.Path == _basePath_;
 
 			<li class="menu-item @(isActive ? "active open" : string.Empty)">
-				<a href="@item.Path" class="menu-link @(isActive ? "active" : string.Empty) @(isThereSubs ? "menu-toggle" : string.Empty)">
+				<a href="@item.Path" class="menu-link @(isActive ? "active" : string.Empty) @(isThereSubs ? "menu-toggle" : string.Empty)" data-icon="@item.Icon">
 					<i class="menu-icon @item.Icon"></i>
-					<div>@item.Title</div>
+					<div class="page-name">@item.Title</div>
 				</a>
 				@if (isThereSubs)
 				{

@@ -9,7 +9,7 @@ public class Log: IEntity, IProjectEntity
     public string? EntityId { get; set; }
     public string? TableName { get; set; }
     public string? RequesterId { get; set; }
-    public CrudTypes Action { get; set; }
+    public CrudType Action { get; set; }
     public string? Data { get; set; }
     public string? NewData { get; set; }
     public string? OldData { get; set; }

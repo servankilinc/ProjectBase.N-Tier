@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+﻿using Core.Utils.ResultPattern;
+using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -7,34 +8,35 @@ namespace Core.Utils.Caching;
 public class CacheService : ICacheService
 {
     private readonly IDistributedCache _distributedCache;
-    public CacheService(IDistributedCache distributedCache) => _distributedCache = distributedCache;
-
-    public CacheResponse GetFromCache(string cacheKey)
+    private readonly CacheSettings _cacheSettings;
+    public CacheService(IDistributedCache distributedCache, CacheSettings cacheSettings)
     {
-        if (string.IsNullOrWhiteSpace(cacheKey)) throw new ArgumentNullException(nameof(cacheKey));
+        _distributedCache = distributedCache;
+        _cacheSettings = cacheSettings;
+    }
 
+    public Result<string> Get(string cacheKey)
+    {
         byte[]? cachedData = _distributedCache.Get(cacheKey);
         if (cachedData != null)
         {
             var response = Encoding.UTF8.GetString(cachedData);
-            if (string.IsNullOrEmpty(response)) return new CacheResponse(IsSuccess: false);
+            if (string.IsNullOrWhiteSpace(response)) return Result<string>.NotFound("Encoding result of the cached data empty");
 
-            return new CacheResponse(IsSuccess: true, Source: response);
+            return Result<string>.Success(response);
         }
         else
         {
-            return new CacheResponse(IsSuccess: false);
+            return Result<string>.NotFound("Cached data empty");
         }
     }
 
-    public void AddToCache<TData>(string cacheKey, string[] cacheGroupKeys, TData data)
+    public Result Add<TData>(string cacheKey, TData data, string[]? cacheGroupKeys = default)
     {
-        if (string.IsNullOrWhiteSpace(cacheKey)) throw new ArgumentNullException(nameof(cacheKey));
-
         DistributedCacheEntryOptions cacheEntryOptions = new DistributedCacheEntryOptions()
         {
-            SlidingExpiration = TimeSpan.FromHours(2),
-            AbsoluteExpiration = DateTime.UtcNow.AddMinutes(30)
+            SlidingExpiration = TimeSpan.FromMinutes(_cacheSettings.SlidingExpirationMinutes),
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(_cacheSettings.AbsoluteExpirationMinutes)
         };
 
         string serializedData = JsonConvert.SerializeObject(data, new JsonSerializerSettings
@@ -43,24 +45,26 @@ public class CacheService : ICacheService
             ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
             MaxDepth = 7
         });
-        byte[]? bytedData = Encoding.UTF8.GetBytes(serializedData);
+        var bytedData = Encoding.UTF8.GetBytes(serializedData);
 
         _distributedCache.Set(cacheKey, bytedData, cacheEntryOptions);
-
-        if (cacheGroupKeys != null && cacheGroupKeys.Any()) AddCacheKeyToGroups(cacheKey, cacheGroupKeys, cacheEntryOptions);
+        if (cacheGroupKeys != null && cacheGroupKeys.Any())
+        {
+            return AddCacheKeyToGroups(cacheKey, cacheGroupKeys, cacheEntryOptions);
+        }
+        return Result.Success();
     }
 
-    public void RemoveFromCache(string cacheKey)
+    public Result Remove(string cacheKey)
     {
-        if (string.IsNullOrWhiteSpace(cacheKey)) throw new ArgumentNullException(nameof(cacheKey));
+        if (string.IsNullOrWhiteSpace(cacheKey)) return Result.Failure("Cache key argument is empty or null");
 
         _distributedCache.Remove(cacheKey);
+        return Result.Success();
     }
 
-    public void RemoveCacheGroupKeys(string[] cacheGroupKeyList)
+    public Result RemoveCacheGroups(string[] cacheGroupKeyList)
     {
-        if (cacheGroupKeyList == null) throw new ArgumentNullException(nameof(cacheGroupKeyList));
-
         foreach (string cacheGroupKey in cacheGroupKeyList)
         {
             byte[]? keyListFromCache = _distributedCache.Get(cacheGroupKey);
@@ -78,9 +82,10 @@ public class CacheService : ICacheService
                 }
             }
         }
+        return Result.Success();
     }
 
-    private void AddCacheKeyToGroups(string cacheKey, string[] cacheGroupKeys, DistributedCacheEntryOptions groupCacheEntryOptions)
+    private Result AddCacheKeyToGroups(string cacheKey, string[] cacheGroupKeys, DistributedCacheEntryOptions groupCacheEntryOptions)
     {
         foreach (string cacheGroupKey in cacheGroupKeys)
         {
@@ -96,7 +101,7 @@ public class CacheService : ICacheService
             }
             else
             {
-                keyListInGroup = new HashSet<string>(new[] { cacheKey });
+                keyListInGroup = [cacheKey];
             }
             string serializedData = JsonConvert.SerializeObject(keyListInGroup, new JsonSerializerSettings
             {
@@ -104,7 +109,9 @@ public class CacheService : ICacheService
                 MaxDepth = 7
             });
             byte[]? bytedKeyList = Encoding.UTF8.GetBytes(serializedData);
-            _distributedCache.Set(cacheGroupKey, bytedKeyList, groupCacheEntryOptions);
+            if (bytedKeyList != null)
+                _distributedCache.Set(cacheGroupKey, bytedKeyList, groupCacheEntryOptions);
         }
+        return Result.Success();
     }
 }

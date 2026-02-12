@@ -5,7 +5,8 @@
     ViewData["Title"] = "Login";
 }
 
-<div class="row justify-content-center">
+<div class="row justify-content-center position-relative">
+    <img src="~/assets/img/backgrounds/bg_signup.png" style="width: 100vw; height: 100vh; position:absolute;object-fit: contain;" />
     <div class="col-lg-4 mt-12">
         <div class="card">
             <div class="card-header border-bottom mb-6">
@@ -23,20 +24,20 @@
                     <div class="mb-6">
                         <label asp-for="Email" class="form-label">Email</label>
                         <input asp-for="Email" class="form-control" autofocus />
-                        <span asp-validation-for="Email"></span>
+                        <span asp-validation-for="Email" class="form_validation_feedback"></span>
                     </div>
                     <div class="mb-6">
                         <label asp-for="Password" class="form-label">Password</label>
                         <div class="input-group">
                             <input asp-for="Password" class="form-control" placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;" />
-                            <span asp-validation-for="Password"></span>
+                            <span asp-validation-for="Password" class="form_validation_feedback"></span>
                         </div>
                     </div>
                     <div class="mb-8">
                         <div class="d-flex justify-content-between">
                             <div class="form-check mb-0">
-                                <input class="form-check-input" type="checkbox" id="remember-me" />
-                                <label class="form-check-label" for="remember-me"> Remember Me </label>
+                                <input asp-for="RememberMe" class="form-check-input" type="checkbox"/>
+                                <label asp-for="RememberMe" class="form-check-label">Beni Hatırla</label>
                             </div>
                             <a asp-controller="Error" asp-action="NotFound">
                                 <span>Forgot Password?</span>

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Core.BaseRequestModels;
 using Core.Model;
 using Core.Utils.Datatable;
 using Core.Utils.DynamicQuery;
@@ -12,26 +13,22 @@ public interface IRepository<TEntity> where TEntity : IEntity
 {
     #region Add
     TEntity Add(TEntity entity);
-    List<TEntity> Add(IEnumerable<TEntity> entities);
-
     TEntity AddAndSave(TEntity entity);
-    List<TEntity> AddAndSave(IEnumerable<TEntity> entities);
+    ICollection<TEntity> Add(IEnumerable<TEntity> entities);
+    ICollection<TEntity> AddAndSave(IEnumerable<TEntity> entities);
     #endregion
 
     #region Update
-    TEntity Update(TEntity entity);
-    List<TEntity> Update(IEnumerable<TEntity> entities);
     TEntity UpdateAndSave(TEntity entity);
-    List<TEntity> UpdateAndSave(IEnumerable<TEntity> entities);
+    ICollection<TEntity> UpdateAndSave(IEnumerable<TEntity> entities);
     #endregion
 
     #region Delete
     void Delete(TEntity entity);
-    void Delete(IEnumerable<TEntity> entities);
-    void Delete(Expression<Func<TEntity, bool>> where);
-
     void DeleteAndSave(TEntity entity);
+    void Delete(IEnumerable<TEntity> entities);
     void DeleteAndSave(IEnumerable<TEntity> entities);
+    void Delete(Expression<Func<TEntity, bool>> where);
     void DeleteAndSave(Expression<Func<TEntity, bool>> where);
     #endregion
 
@@ -57,8 +54,7 @@ public interface IRepository<TEntity> where TEntity : IEntity
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-        bool ignoreFilters = false,
-        bool tracking = false
+        bool ignoreFilters = false
     );
     TResult? Get<TResult>(
         IConfigurationProvider configurationProvider,
@@ -67,18 +63,7 @@ public interface IRepository<TEntity> where TEntity : IEntity
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-        bool ignoreFilters = false,
-        bool tracking = false
-    );
-    TResult? Get<TResult>(
-        IMapper mapper,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
-        Expression<Func<TEntity, bool>>? where = null,
-        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-        bool ignoreFilters = false,
-        bool tracking = false
+        bool ignoreFilters = false
     );
     #endregion
 
@@ -99,8 +84,7 @@ public interface IRepository<TEntity> where TEntity : IEntity
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-        bool ignoreFilters = false,
-        bool tracking = false
+        bool ignoreFilters = false
     );
     ICollection<TResult>? GetAll<TResult>(
         IConfigurationProvider configurationProvider,
@@ -109,45 +93,29 @@ public interface IRepository<TEntity> where TEntity : IEntity
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-        bool ignoreFilters = false,
-        bool tracking = false
+        bool ignoreFilters = false
     );
-    ICollection<TResult>? GetAll<TResult>(
-        IMapper mapper,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null, Expression<Func<TEntity, bool>>? where = null,
-        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-        bool ignoreFilters = false,
-        bool tracking = false
-     );
     #endregion
 
     #region Datatable Server-Side
     DatatableResponseServerSide<TEntity> DatatableServerSide(
-        DatatableRequest datatableRequest,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false
     );
     DatatableResponseServerSide<TResult> DatatableServerSide<TResult>(
-        DatatableRequest datatableRequest,
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, TResult>> select,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false
     );
     DatatableResponseServerSide<TResult> DatatableServerSide<TResult>(
-        DatatableRequest datatableRequest,
+        DynamicDatatableRequest datatableRequest,
         IConfigurationProvider configurationProvider,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
@@ -157,26 +125,23 @@ public interface IRepository<TEntity> where TEntity : IEntity
 
     #region Datatable Client-Side
     DatatableResponseClientSide<TEntity> DatatableClientSide(
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false
     );
     DatatableResponseClientSide<TResult> DatatableClientSide<TResult>(
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, TResult>> select,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false
     );
     DatatableResponseClientSide<TResult> DatatableClientSide<TResult>(
+        DynamicDatatableRequest datatableRequest,
         IConfigurationProvider configurationProvider,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
@@ -186,33 +151,31 @@ public interface IRepository<TEntity> where TEntity : IEntity
 
     #region Pagination
     PaginationResponse<TEntity> Pagination(
-        PaginationRequest paginationRequest,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+        DynamicPaginationRequest paginationRequest,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false
     );
     PaginationResponse<TResult> Pagination<TResult>(
-        PaginationRequest paginationRequest,
+        DynamicPaginationRequest paginationRequest,
         Expression<Func<TEntity, TResult>> select,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false
     );
     PaginationResponse<TResult> Pagination<TResult>(
-        PaginationRequest paginationRequest,
+        DynamicPaginationRequest paginationRequest,
         IConfigurationProvider configurationProvider,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false
     );
+    #endregion
+
+    #region SaveChanges
+    void SaveChanges();
     #endregion
 }

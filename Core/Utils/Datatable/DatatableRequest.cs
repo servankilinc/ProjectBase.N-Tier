@@ -8,11 +8,6 @@ public class DatatableRequest
     public Search? Search { get; set; }
     public List<Order>? Order { get; set; }
     public List<Column>? Columns { get; set; }
-
-    public DatatableRequest GetDatatableRequest()
-    {
-        return this;
-    }
 }
 
 

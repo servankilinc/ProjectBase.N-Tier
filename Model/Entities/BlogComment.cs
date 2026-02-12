@@ -2,7 +2,7 @@
 
 namespace Model.Entities;
 
-public class BlogComment : IEntity, IAuditableEntity, ILoggableEntity
+public class BlogComment : IEntity, IAuditableEntity
 {
     public Guid Id { get; set; }
     public Guid BlogId { get; set; }

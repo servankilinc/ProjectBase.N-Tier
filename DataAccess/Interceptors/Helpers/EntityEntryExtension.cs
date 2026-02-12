@@ -20,30 +20,41 @@ public static class EntityEntryExtension
 
     public static string? GetEntityId(this EntityEntry entry)
     {
-        var primaryKeys = entry.Metadata.FindPrimaryKey()?.Properties.Select(pk => entry.Property(pk.Name).CurrentValue?.ToString()).Where(v => !string.IsNullOrEmpty(v));
-        string? entityId = default;
-        if (primaryKeys != null && primaryKeys.Count() > 0)
+        var primaryKey = entry.Metadata.FindPrimaryKey();
+        if (primaryKey == null) return string.Empty;
+
+        var keyValues = new List<string>();
+
+        foreach (var property in primaryKey.Properties)
         {
-            if (primaryKeys.Count() == 1) entityId = primaryKeys.FirstOrDefault();
-            else entityId = primaryKeys.OrderByDescending(x => x).Aggregate((a, b) => $"{a}-{b}");
+            var value = entry.Property(property.Name).CurrentValue;
+
+            if (value == null) return string.Empty;
+
+            keyValues.Add(value.ToString()!);
         }
-        return entityId;
+
+        // Sadece PK var direkt dön
+        if (keyValues.Count == 1)
+            return keyValues[0];
+
+        return string.Join("-", keyValues);
     }
 
-    public static CrudTypes GetActionType(this EntityEntry entry)
+    public static CrudType GetActionType(this EntityEntry entry)
     {
-        CrudTypes actionType = CrudTypes.Undefined;
-        if (entry.State == EntityState.Added)
+        CrudType actionType = CrudType.Undefined;
+        switch (entry.State)
         {
-            actionType = CrudTypes.Create;
-        }
-        else if (entry.State == EntityState.Modified)
-        {
-            actionType = CrudTypes.Update;
-        }
-        else if (entry.State == EntityState.Deleted)
-        {
-            actionType = CrudTypes.Delete;
+            case EntityState.Added:
+                actionType = CrudType.Create;
+                break;
+            case EntityState.Modified:
+                actionType = CrudType.Update;
+                break;
+            case EntityState.Deleted:
+                actionType = CrudType.Delete;
+                break;
         }
         return actionType;
     }

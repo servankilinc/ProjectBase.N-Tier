@@ -2,7 +2,7 @@
 
 namespace Model.Entities;
 
-public class BlogLike : IEntity, ILoggableEntity
+public class BlogLike : IEntity
 {
     public Guid BlogId { get; set; }
     public Guid UserId { get; set; }

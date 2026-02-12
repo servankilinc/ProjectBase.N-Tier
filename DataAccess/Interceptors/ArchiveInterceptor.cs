@@ -10,11 +10,11 @@ namespace DataAccess.Interceptors;
 
 public sealed class ArchiveInterceptor : SaveChangesInterceptor
 {
-    private readonly HttpContextManager _httpContextManager;
-    public ArchiveInterceptor(HttpContextManager httpContextManager) => _httpContextManager = httpContextManager;
+    private readonly IHttpContextManager _httpContextManager;
+    public ArchiveInterceptor(IHttpContextManager httpContextManager) => _httpContextManager = httpContextManager;
 
 
-    //  ****************************** SYNC VERSION ******************************
+    #region SYNC VERSION
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
         if (eventData.Context is null) return base.SavingChanges(eventData, result);
@@ -25,18 +25,23 @@ public sealed class ArchiveInterceptor : SaveChangesInterceptor
         if (archivableEntries.Any())
         {
             List<Archive> archives = new List<Archive>();
+
+            var requesterId = _httpContextManager.GetNameIdentifier();
+            var clientIp = _httpContextManager.GetClientIp();
+            var userAgent = _httpContextManager.GetUserAgent();
+
             foreach (EntityEntry<IArchivableEntity> entry in archivableEntries)
             {
                 archives.Add(new Archive
                 {
                     TableName = entry.GetTableName(),
                     EntityId = entry.GetEntityId(),
-                    RequesterId = _httpContextManager.GetUserId(),
-                    ClientIp = _httpContextManager.GetClientIp(),
-                    UserAgent = _httpContextManager.GetUserAgent(),
+                    RequesterId = requesterId.IsSuccess ? requesterId.Data : string.Empty,
+                    ClientIp = clientIp.IsSuccess ? clientIp.Data : string.Empty,
+                    UserAgent = userAgent.IsSuccess ? userAgent.Data : string.Empty,
                     Action = entry.GetActionType(),
                     DateUtc = DateTime.UtcNow,
-                    Data = entry.GetOriginalData(),
+                    Data = entry.GetOriginalData()
                 });
             }
             eventData.Context.Set<Archive>().AddRange(archives);
@@ -44,9 +49,10 @@ public sealed class ArchiveInterceptor : SaveChangesInterceptor
 
         return base.SavingChanges(eventData, result);
     }
+    #endregion
 
 
-    //  ****************************** ASYNC VERSION ******************************
+    #region ASYNC VERSION
     public override ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
     {
         if (eventData.Context is null) return base.SavingChangesAsync(eventData, result, cancellationToken);
@@ -57,18 +63,23 @@ public sealed class ArchiveInterceptor : SaveChangesInterceptor
         if (archivableEntries.Any())
         {
             List<Archive> archives = new List<Archive>();
+
+            var requesterId = _httpContextManager.GetNameIdentifier();
+            var clientIp = _httpContextManager.GetClientIp();
+            var userAgent = _httpContextManager.GetUserAgent();
+
             foreach (EntityEntry<IArchivableEntity> entry in archivableEntries)
             {
                 archives.Add(new Archive
                 {
                     TableName = entry.GetTableName(),
                     EntityId = entry.GetEntityId(),
-                    RequesterId = _httpContextManager.GetUserId(),
-                    ClientIp = _httpContextManager.GetClientIp(),
-                    UserAgent = _httpContextManager.GetUserAgent(),
+                    RequesterId = requesterId.IsSuccess ? requesterId.Data : string.Empty,
+                    ClientIp = clientIp.IsSuccess ? clientIp.Data : string.Empty,
+                    UserAgent = userAgent.IsSuccess ? userAgent.Data : string.Empty,
                     Action = entry.GetActionType(),
                     DateUtc = DateTime.UtcNow,
-                    Data = entry.GetOriginalData(),
+                    Data = entry.GetOriginalData()
                 });
             }
             eventData.Context.Set<Archive>().AddRange(archives);
@@ -76,4 +87,5 @@ public sealed class ArchiveInterceptor : SaveChangesInterceptor
 
         return base.SavingChangesAsync(eventData, result, cancellationToken);
     }
+    #endregion
 }

@@ -2,7 +2,7 @@
 
 namespace Model.Entities;
 
-public class Category : IEntity, ISoftDeletableEntity, IAuditableEntity, ILoggableEntity, IArchivableEntity
+public class Category : IEntity, ISoftDeletableEntity, IAuditableEntity, IArchivableEntity
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = null!;

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Core.BaseRequestModels;
 using Core.Model;
 using Core.Utils.Datatable;
 using Core.Utils.DynamicQuery;
@@ -19,7 +20,7 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     // DbContext 
     // IdentityDbContext<User, IdentityRole<Guid>, Guid> && IdentityDbContext<User, Role<Guid>, Guid>
 {
-    protected TContext _context { get; set; }
+    protected readonly TContext _context;
     public RepositoryBase(TContext context) => _context = context;
 
 
@@ -31,7 +32,7 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         return entity;
     }
 
-    public List<TEntity> Add(IEnumerable<TEntity> entities)
+    public ICollection<TEntity> Add(IEnumerable<TEntity> entities)
     {
         _context.Set<TEntity>().AddRange(entities);
         return entities.ToList();
@@ -44,7 +45,7 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         return entity;
     }
 
-    public List<TEntity> AddAndSave(IEnumerable<TEntity> entities)
+    public ICollection<TEntity> AddAndSave(IEnumerable<TEntity> entities)
     {
         _context.Set<TEntity>().AddRange(entities);
         _context.SaveChanges();
@@ -53,18 +54,6 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     #endregion
 
     #region Update
-    public TEntity Update(TEntity entity)
-    {
-        _context.Entry(entity).State = EntityState.Modified;
-        return entity;
-    }
-
-    public List<TEntity> Update(IEnumerable<TEntity> entities)
-    {
-        _context.Set<TEntity>().UpdateRange(entities);
-        return entities.ToList();
-    }
-
     public TEntity UpdateAndSave(TEntity entity)
     {
         _context.Entry(entity).State = EntityState.Modified;
@@ -72,7 +61,7 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         return entity;
     }
 
-    public List<TEntity> UpdateAndSave(IEnumerable<TEntity> entities)
+    public ICollection<TEntity> UpdateAndSave(IEnumerable<TEntity> entities)
     {
         _context.Set<TEntity>().UpdateRange(entities);
         _context.SaveChanges();
@@ -171,12 +160,9 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-        bool ignoreFilters = false,
-        bool tracking = false)
+        bool ignoreFilters = false)
     {
-        if (select == null) throw new ArgumentNullException(nameof(select));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
@@ -184,20 +170,8 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         if (sorts != null) query = query.ToSort(sorts);
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        if (!tracking) query = query.AsNoTracking();
 
-        if (typeof(ILocalizableEntity).IsAssignableFrom(typeof(TEntity)))
-        {
-            var entity = query.FirstOrDefault();
-
-            var selector = select.Compile();
-            if (entity == null) return default;
-            return selector(entity);
-        }
-        else
-        {
-            return  query.Select(select).FirstOrDefault();
-        }
+        return query.Select(select).FirstOrDefault();
     }
 
     public TResult? Get<TResult>(
@@ -207,13 +181,9 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-        bool ignoreFilters = false,
-        bool tracking = false
-    )
+        bool ignoreFilters = false)
     {
-        if (configurationProvider == null) throw new ArgumentNullException(nameof(configurationProvider));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
@@ -221,35 +191,8 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         if (sorts != null) query = query.ToSort(sorts);
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        if (!tracking) query = query.AsNoTracking();
 
         return query.ProjectTo<TResult>(configurationProvider).FirstOrDefault();
-    }
-
-    public TResult? Get<TResult>(
-        IMapper mapper,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
-        Expression<Func<TEntity, bool>>? where = null,
-        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-        bool ignoreFilters = false,
-        bool tracking = false
-    )
-    {
-        var query = _context.Set<TEntity>().AsQueryable();
-
-        if (where != null) query = query.Where(where);
-        if (filter != null) query = query.ToFilter(filter);
-        if (orderBy != null) query = orderBy(query);
-        if (sorts != null) query = query.ToSort(sorts);
-        if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
-        if (!tracking) query = query.AsNoTracking();
-
-        var entity = query.FirstOrDefault();
-
-        return mapper.Map<TResult>(entity);
     }
     #endregion
 
@@ -283,12 +226,9 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-        bool ignoreFilters = false,
-        bool tracking = false)
+        bool ignoreFilters = false)
     {
-        if (select == null) throw new ArgumentNullException(nameof(select));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
@@ -296,18 +236,8 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         if (sorts != null) query = query.ToSort(sorts);
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        if (!tracking) query = query.AsNoTracking();
 
-        if (typeof(ILocalizableEntity).IsAssignableFrom(typeof(TEntity)))
-        {
-            var entities = query.ToList();
-            var selector = select.Compile();
-            return entities.Select(selector).ToList();
-        }
-        else
-        {
-            return query.Select(select).ToList();
-        }
+        return query.Select(select).ToList();
     }
 
     public ICollection<TResult>? GetAll<TResult>(
@@ -317,12 +247,9 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-        bool ignoreFilters = false,
-        bool tracking = false)
+        bool ignoreFilters = false)
     {
-        if (configurationProvider == null) throw new ArgumentNullException(nameof(configurationProvider));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
@@ -330,110 +257,79 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         if (sorts != null) query = query.ToSort(sorts);
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        if (!tracking) query = query.AsNoTracking();
 
         return query.ProjectTo<TResult>(configurationProvider).ToList();
-    }
-
-    public ICollection<TResult>? GetAll<TResult>(
-        IMapper mapper,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
-        Expression<Func<TEntity, bool>>? where = null,
-        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-        bool ignoreFilters = false,
-        bool tracking = false)
-    {
-        var query = _context.Set<TEntity>().AsQueryable();
-
-        if (where != null) query = query.Where(where);
-        if (filter != null) query = query.ToFilter(filter);
-        if (orderBy != null) query = orderBy(query);
-        if (sorts != null) query = query.ToSort(sorts);
-        if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
-        if (!tracking) query = query.AsNoTracking();
-
-        var entities = query.ToList();
-
-        return mapper.Map<ICollection<TResult>>(entities);
     }
     #endregion
 
     #region Datatable Server-Side
     public DatatableResponseServerSide<TEntity> DatatableServerSide(
-        DatatableRequest datatableRequest,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false)
     {
-        if (datatableRequest == null) throw new ArgumentNullException(nameof(datatableRequest));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
-        if (filter != null) query = query.ToFilter(filter);
+        if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
-        if (sorts != null) query = query.ToSort(sorts);
+        if (datatableRequest.Sorts != null)
+        {
+            query = query.ToSort(datatableRequest.Sorts);
+            datatableRequest.Order = null;
+        }
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        query = query.AsNoTracking();
 
         return query.ToDatatableServerSide(datatableRequest);
     }
 
     public DatatableResponseServerSide<TResult> DatatableServerSide<TResult>(
-        DatatableRequest datatableRequest,
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, TResult>> select,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false)
     {
-        if (datatableRequest == null) throw new ArgumentNullException(nameof(datatableRequest));
-        if (select == null) throw new ArgumentNullException(nameof(select));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
-        if (filter != null) query = query.ToFilter(filter);
+        if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
-        if (sorts != null) query = query.ToSort(sorts);
+        if (datatableRequest.Sorts != null)
+        {
+            query = query.ToSort(datatableRequest.Sorts);
+            datatableRequest.Order = null;
+        }
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        query = query.AsNoTracking();
 
         return query.Select(select).ToDatatableServerSide(datatableRequest);
     }
 
     public DatatableResponseServerSide<TResult> DatatableServerSide<TResult>(
-        DatatableRequest datatableRequest,
+        DynamicDatatableRequest datatableRequest,
         IConfigurationProvider configurationProvider,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false)
     {
-        if (datatableRequest == null) throw new ArgumentNullException(nameof(datatableRequest));
-        if (configurationProvider == null) throw new ArgumentNullException(nameof(configurationProvider));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
-        if (filter != null) query = query.ToFilter(filter);
+        if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
-        if (sorts != null) query = query.ToSort(sorts);
+        if (datatableRequest.Sorts != null)
+        {
+            query = query.ToSort(datatableRequest.Sorts);
+            datatableRequest.Order = null;
+        }
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        query = query.AsNoTracking();
 
         return query.ProjectTo<TResult>(configurationProvider).ToDatatableServerSide(datatableRequest);
     }
@@ -441,70 +337,72 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
 
     #region Datatable Client-Side
     public DatatableResponseClientSide<TEntity> DatatableClientSide(
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false)
     {
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
-        if (filter != null) query = query.ToFilter(filter);
+        if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
-        if (sorts != null) query = query.ToSort(sorts);
+        if (datatableRequest.Sorts != null)
+        {
+            query = query.ToSort(datatableRequest.Sorts);
+            datatableRequest.Order = null;
+        }
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        query = query.AsNoTracking();
 
         return query.ToDatatableClientSide();
     }
 
     public DatatableResponseClientSide<TResult> DatatableClientSide<TResult>(
-      Expression<Func<TEntity, TResult>> select,
-      Filter? filter = null,
-      IEnumerable<Sort>? sorts = null,
-      Expression<Func<TEntity, bool>>? where = null,
-      Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-      Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-      bool ignoreFilters = false)
-    {
-        if (select == null) throw new ArgumentNullException(nameof(select));
-
-        var query = _context.Set<TEntity>().AsQueryable();
-
-        if (where != null) query = query.Where(where);
-        if (filter != null) query = query.ToFilter(filter);
-        if (orderBy != null) query = orderBy(query);
-        if (sorts != null) query = query.ToSort(sorts);
-        if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
-        query = query.AsNoTracking();
-
-        return query.Select(select).ToDatatableClientSide();
-    }
-
-    public DatatableResponseClientSide<TResult> DatatableClientSide<TResult>(
-        IConfigurationProvider configurationProvider,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+        DynamicDatatableRequest datatableRequest,
+        Expression<Func<TEntity, TResult>> select,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false)
     {
-        if (configurationProvider == null) throw new ArgumentNullException(nameof(configurationProvider));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
-        if (filter != null) query = query.ToFilter(filter);
+        if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
-        if (sorts != null) query = query.ToSort(sorts);
+        if (datatableRequest.Sorts != null)
+        {
+            query = query.ToSort(datatableRequest.Sorts);
+            datatableRequest.Order = null;
+        }
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        query = query.AsNoTracking();
+
+        return query.Select(select).ToDatatableClientSide();
+    }
+
+    public DatatableResponseClientSide<TResult> DatatableClientSide<TResult>(
+        DynamicDatatableRequest datatableRequest,
+        IConfigurationProvider configurationProvider,
+        Expression<Func<TEntity, bool>>? where = null,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
+        bool ignoreFilters = false)
+    {
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
+
+        if (where != null) query = query.Where(where);
+        if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
+        if (orderBy != null) query = orderBy(query);
+        if (datatableRequest.Sorts != null)
+        {
+            query = query.ToSort(datatableRequest.Sorts);
+            datatableRequest.Order = null;
+        }
+        if (include != null) query = include(query);
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return query.ProjectTo<TResult>(configurationProvider).ToDatatableClientSide();
     }
@@ -512,82 +410,71 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
 
     #region Pagination
     public PaginationResponse<TEntity> Pagination(
-        PaginationRequest paginationRequest,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+        DynamicPaginationRequest paginationRequest,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false)
     {
-        if (paginationRequest == null) throw new ArgumentNullException(nameof(paginationRequest));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
-        if (filter != null) query = query.ToFilter(filter);
+        if (paginationRequest.Filter != null) query = query.ToFilter(paginationRequest.Filter);
         if (orderBy != null) query = orderBy(query);
-        if (sorts != null) query = query.ToSort(sorts);
+        if (paginationRequest.Sorts != null) query = query.ToSort(paginationRequest.Sorts);
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        query = query.AsNoTracking();
 
         return query.ToPaginate(paginationRequest);
     }
 
     public PaginationResponse<TResult> Pagination<TResult>(
-        PaginationRequest paginationRequest,
+        DynamicPaginationRequest paginationRequest,
         Expression<Func<TEntity, TResult>> select,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false)
     {
-        if (paginationRequest == null) throw new ArgumentNullException(nameof(paginationRequest));
-        if (select == null) throw new ArgumentNullException(nameof(select));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
-        if (filter != null) query = query.ToFilter(filter);
+        if (paginationRequest.Filter != null) query = query.ToFilter(paginationRequest.Filter);
         if (orderBy != null) query = orderBy(query);
-        if (sorts != null) query = query.ToSort(sorts);
+        if (paginationRequest.Sorts != null) query = query.ToSort(paginationRequest.Sorts);
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        query = query.AsNoTracking();
 
         return query.Select(select).ToPaginate(paginationRequest);
     }
 
     public PaginationResponse<TResult> Pagination<TResult>(
-        PaginationRequest paginationRequest,
+        DynamicPaginationRequest paginationRequest,
         IConfigurationProvider configurationProvider,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false)
     {
-        if (paginationRequest == null) throw new ArgumentNullException(nameof(paginationRequest));
-        if (configurationProvider == null) throw new ArgumentNullException(nameof(configurationProvider));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
-        if (filter != null) query = query.ToFilter(filter);
+        if (paginationRequest.Filter != null) query = query.ToFilter(paginationRequest.Filter);
         if (orderBy != null) query = orderBy(query);
-        if (sorts != null) query = query.ToSort(sorts);
+        if (paginationRequest.Sorts != null) query = query.ToSort(paginationRequest.Sorts);
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        query = query.AsNoTracking();
 
         return query.ProjectTo<TResult>(configurationProvider).ToPaginate(paginationRequest);
     }
     #endregion
 
+    #region SaveChanges
+    public void SaveChanges()
+    {
+        _context.SaveChanges();
+    }
+    #endregion
 
     // ############################# Async Methods #############################
     #region Add
@@ -598,7 +485,7 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         return entity;
     }
 
-    public async Task<List<TEntity>> AddAndSaveAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+    public async Task<ICollection<TEntity>> AddAndSaveAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
     {
         _context.Set<TEntity>().AddRange(entities);
         await _context.SaveChangesAsync(cancellationToken);
@@ -614,7 +501,7 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         return entity;
     }
 
-    public async Task<List<TEntity>> UpdateAndSaveAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+    public async Task<ICollection<TEntity>> UpdateAndSaveAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
     {
         _context.Set<TEntity>().UpdateRange(entities);
         await _context.SaveChangesAsync(cancellationToken);
@@ -707,12 +594,9 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
-        bool tracking = false,
         CancellationToken cancellationToken = default)
     {
-        if (select == null) throw new ArgumentNullException(nameof(select));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
@@ -720,20 +604,8 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         if (sorts != null) query = query.ToSort(sorts);
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        if (!tracking) query = query.AsNoTracking();
 
-        if (typeof(ILocalizableEntity).IsAssignableFrom(typeof(TEntity)))
-        {
-            var entity = await query.FirstOrDefaultAsync(cancellationToken);
-
-            var selector = select.Compile();
-            if (entity == null) return default;
-            return selector(entity);
-        }
-        else
-        {
-            return await query.Select(select).FirstOrDefaultAsync(cancellationToken);
-        }
+        return await query.Select(select).FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<TResult?> GetAsync<TResult>(
@@ -744,13 +616,9 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
-        bool tracking = false,
-        CancellationToken cancellationToken = default
-    )
+        CancellationToken cancellationToken = default)
     {
-        if (configurationProvider == null) throw new ArgumentNullException(nameof(configurationProvider));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
@@ -758,35 +626,8 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         if (sorts != null) query = query.ToSort(sorts);
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        if (!tracking) query = query.AsNoTracking();
 
         return await query.ProjectTo<TResult>(configurationProvider).FirstOrDefaultAsync(cancellationToken);
-    }
-
-    public async Task<TResult?> GetAsync<TResult>(
-        IMapper mapper,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
-        Expression<Func<TEntity, bool>>? where = null,
-        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-        bool ignoreFilters = false,
-        bool tracking = false,
-        CancellationToken cancellationToken = default
-    )
-    {
-        var query = _context.Set<TEntity>().AsQueryable();
-
-        if (where != null) query = query.Where(where);
-        if (filter != null) query = query.ToFilter(filter);
-        if (orderBy != null) query = orderBy(query);
-        if (sorts != null) query = query.ToSort(sorts);
-        if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
-        if (!tracking) query = query.AsNoTracking();
-
-        var entity =  await query.FirstOrDefaultAsync(cancellationToken);
-        return mapper.Map<TResult>(entity);
     }
     #endregion
 
@@ -822,12 +663,9 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
-        bool tracking = false,
         CancellationToken cancellationToken = default)
     {
-        if (select == null) throw new ArgumentNullException(nameof(select));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
@@ -835,18 +673,8 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         if (sorts != null) query = query.ToSort(sorts);
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        if (!tracking) query = query.AsNoTracking();
 
-        if (typeof(ILocalizableEntity).IsAssignableFrom(typeof(TEntity)))
-        {
-            var entities = await query.ToListAsync();
-            var selector = select.Compile();
-            return entities.Select(selector).ToList();
-        }
-        else
-        {
-            return await query.Select(select).ToListAsync();
-        }
+        return await query.Select(select).ToListAsync();
     }
 
     public async Task<ICollection<TResult>?> GetAllAsync<TResult>(
@@ -857,13 +685,9 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
-        bool tracking = false,
-        CancellationToken cancellationToken = default
-    )
+        CancellationToken cancellationToken = default)
     {
-        if (configurationProvider == null) throw new ArgumentNullException(nameof(configurationProvider));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
@@ -871,115 +695,82 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
         if (sorts != null) query = query.ToSort(sorts);
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        if (!tracking) query = query.AsNoTracking();
 
         return await query.ProjectTo<TResult>(configurationProvider).ToListAsync(cancellationToken);
-    }
-
-    public async Task<ICollection<TResult>?> GetAllAsync<TResult>(
-        IMapper mapper,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
-        Expression<Func<TEntity, bool>>? where = null,
-        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-        bool ignoreFilters = false,
-        bool tracking = false,
-        CancellationToken cancellationToken = default
-    )
-    {
-        var query = _context.Set<TEntity>().AsQueryable();
-
-        if (where != null) query = query.Where(where);
-        if (filter != null) query = query.ToFilter(filter);
-        if (orderBy != null) query = orderBy(query);
-        if (sorts != null) query = query.ToSort(sorts);
-        if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
-        if (!tracking) query = query.AsNoTracking();
-         
-        var entities = await query.ToListAsync(cancellationToken);
-
-        return mapper.Map<ICollection<TResult>>(entities);
     }
     #endregion
 
     #region Datatable Server-Side
     public async Task<DatatableResponseServerSide<TEntity>> DatatableServerSideAsync(
-        DatatableRequest datatableRequest,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
         CancellationToken cancellationToken = default)
     {
-        if (datatableRequest == null) throw new ArgumentNullException(nameof(datatableRequest));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
-        if (filter != null) query = query.ToFilter(filter);
+        if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
-        if (sorts != null) query = query.ToSort(sorts);
+        if (datatableRequest.Sorts != null)
+        {
+            query = query.ToSort(datatableRequest.Sorts);
+            datatableRequest.Order = null;
+        }
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        query = query.AsNoTracking();
 
         return await query.ToDatatableServerSideAsync(datatableRequest, cancellationToken);
     }
 
     public async Task<DatatableResponseServerSide<TResult>> DatatableServerSideAsync<TResult>(
-        DatatableRequest datatableRequest,
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, TResult>> select,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
         CancellationToken cancellationToken = default)
     {
-        if (datatableRequest == null) throw new ArgumentNullException(nameof(datatableRequest));
-        if (select == null) throw new ArgumentNullException(nameof(select));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
-        if (filter != null) query = query.ToFilter(filter);
+        if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
-        if (sorts != null) query = query.ToSort(sorts);
+        if (datatableRequest.Sorts != null)
+        {
+            query = query.ToSort(datatableRequest.Sorts);
+            datatableRequest.Order = null;
+        }
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        query = query.AsNoTracking();
 
         return await query.Select(select).ToDatatableServerSideAsync(datatableRequest, cancellationToken);
     }
 
     public async Task<DatatableResponseServerSide<TResult>> DatatableServerSideAsync<TResult>(
-        DatatableRequest datatableRequest,
+        DynamicDatatableRequest datatableRequest,
         IConfigurationProvider configurationProvider,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
         CancellationToken cancellationToken = default)
     {
-        if (datatableRequest == null) throw new ArgumentNullException(nameof(datatableRequest));
-        if (configurationProvider == null) throw new ArgumentNullException(nameof(configurationProvider));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
-        if (filter != null) query = query.ToFilter(filter);
+        if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
-        if (sorts != null) query = query.ToSort(sorts);
+        if (datatableRequest.Sorts != null)
+        {
+            query = query.ToSort(datatableRequest.Sorts);
+            datatableRequest.Order = null;
+        }
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        query = query.AsNoTracking();
 
         return await query.ProjectTo<TResult>(configurationProvider).ToDatatableServerSideAsync(datatableRequest, cancellationToken);
     }
@@ -987,73 +778,75 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
 
     #region Datatable Client-Side
     public async Task<DatatableResponseClientSide<TEntity>> DatatableClientSideAsync(
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
         CancellationToken cancellationToken = default)
     {
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
-        if (filter != null) query = query.ToFilter(filter);
+        if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
-        if (sorts != null) query = query.ToSort(sorts);
+        if (datatableRequest.Sorts != null)
+        {
+            query = query.ToSort(datatableRequest.Sorts);
+            datatableRequest.Order = null;
+        }
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        query = query.AsNoTracking();
 
         return await query.ToDatatableClientSideAsync(cancellationToken);
     }
 
     public async Task<DatatableResponseClientSide<TResult>> DatatableClientSideAsync<TResult>(
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, TResult>> select,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
         CancellationToken cancellationToken = default)
     {
-        if (select == null) throw new ArgumentNullException(nameof(select));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
-        if (filter != null) query = query.ToFilter(filter);
+        if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
-        if (sorts != null) query = query.ToSort(sorts);
+        if (datatableRequest.Sorts != null)
+        {
+            query = query.ToSort(datatableRequest.Sorts);
+            datatableRequest.Order = null;
+        }
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        query = query.AsNoTracking();
 
         return await query.Select(select).ToDatatableClientSideAsync(cancellationToken);
     }
 
     public async Task<DatatableResponseClientSide<TResult>> DatatableClientSideAsync<TResult>(
+        DynamicDatatableRequest datatableRequest,
         IConfigurationProvider configurationProvider,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
         CancellationToken cancellationToken = default)
     {
-        if (configurationProvider == null) throw new ArgumentNullException(nameof(configurationProvider));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
-        if (filter != null) query = query.ToFilter(filter);
+        if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
-        if (sorts != null) query = query.ToSort(sorts);
+        if (datatableRequest.Sorts != null)
+        {
+            query = query.ToSort(datatableRequest.Sorts);
+            datatableRequest.Order = null;
+        }
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        query = query.AsNoTracking();
 
         return await query.ProjectTo<TResult>(configurationProvider).ToDatatableClientSideAsync(cancellationToken);
     }
@@ -1061,82 +854,72 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
 
     #region Pagination
     public async Task<PaginationResponse<TEntity>> PaginationAsync(
-        PaginationRequest paginationRequest,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+        DynamicPaginationRequest paginationRequest,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
         CancellationToken cancellationToken = default)
     {
-        if (paginationRequest == null) throw new ArgumentNullException(nameof(paginationRequest));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
-        if (filter != null) query = query.ToFilter(filter);
+        if (paginationRequest.Filter != null) query = query.ToFilter(paginationRequest.Filter);
         if (orderBy != null) query = orderBy(query);
-        if (sorts != null) query = query.ToSort(sorts);
+        if (paginationRequest.Sorts != null) query = query.ToSort(paginationRequest.Sorts);
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        query = query.AsNoTracking();
 
         return await query.ToPaginateAsync(paginationRequest, cancellationToken);
     }
 
     public async Task<PaginationResponse<TResult>> PaginationAsync<TResult>(
-        PaginationRequest paginationRequest,
+        DynamicPaginationRequest paginationRequest,
         Expression<Func<TEntity, TResult>> select,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
         CancellationToken cancellationToken = default)
     {
-        if (paginationRequest == null) throw new ArgumentNullException(nameof(paginationRequest));
-        if (select == null) throw new ArgumentNullException(nameof(select));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
-        if (filter != null) query = query.ToFilter(filter);
+        if (paginationRequest.Filter != null) query = query.ToFilter(paginationRequest.Filter);
         if (orderBy != null) query = orderBy(query);
-        if (sorts != null) query = query.ToSort(sorts);
+        if (paginationRequest.Sorts != null) query = query.ToSort(paginationRequest.Sorts);
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        query = query.AsNoTracking();
 
         return await query.Select(select).ToPaginateAsync(paginationRequest, cancellationToken);
     }
 
     public async Task<PaginationResponse<TResult>> PaginationAsync<TResult>(
-        PaginationRequest paginationRequest,
+        DynamicPaginationRequest paginationRequest,
         IConfigurationProvider configurationProvider,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
         CancellationToken cancellationToken = default)
     {
-        if (paginationRequest == null) throw new ArgumentNullException(nameof(paginationRequest));
-        if (configurationProvider == null) throw new ArgumentNullException(nameof(configurationProvider));
-
-        var query = _context.Set<TEntity>().AsQueryable();
+        var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
         if (where != null) query = query.Where(where);
-        if (filter != null) query = query.ToFilter(filter);
+        if (paginationRequest.Filter != null) query = query.ToFilter(paginationRequest.Filter);
         if (orderBy != null) query = orderBy(query);
-        if (sorts != null) query = query.ToSort(sorts);
+        if (paginationRequest.Sorts != null) query = query.ToSort(paginationRequest.Sorts);
         if (include != null) query = include(query);
         if (ignoreFilters) query = query.IgnoreQueryFilters();
-        query = query.AsNoTracking();
 
         return await query.ProjectTo<TResult>(configurationProvider).ToPaginateAsync(paginationRequest, cancellationToken);
+    }
+    #endregion
+
+    #region SaveChanges
+    public async Task SaveChangesAsync()
+    {
+        await _context.SaveChangesAsync();
     }
     #endregion
 }

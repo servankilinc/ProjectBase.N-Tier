@@ -1,5 +1,3 @@
-using Autofac;
-using Autofac.Extensions.DependencyInjection;
 using Business;
 using Core;
 using Core.Utils.Auth;
@@ -8,23 +6,25 @@ using DataAccess.Contexts;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Options;
 using Model;
 using Model.Entities;
 using Serilog;
-using Serilog.Filters;
+using Serilog.Events;
 using System.Threading.RateLimiting;
 using WebUI.ExceptionHandler;
+using WebUI.Utils.ActionFilters;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
+builder.Services.AddControllersWithViews()
+    .AddRazorRuntimeCompilation();
 
 builder.Services.AddFluentValidationAutoValidation();
-builder.Services.AddFluentValidationClientsideAdapters(); 
+builder.Services.AddFluentValidationClientsideAdapters();
 
 
-
-// ------- CORS -------
+#region ------- CORS -------
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("policy_cors", builder =>
@@ -32,84 +32,43 @@ builder.Services.AddCors(options =>
         builder
             .AllowAnyOrigin()
             //.WithOrigins("https://www.frontend.com")
-            //.AllowCredentials() // AllowAnyOrigin and AllowCredentials cannot using together use with WithOrigins option 
-            .WithHeaders("Content-Type", "Authorization")
+            //.AllowCredentials() // AllowAnyOrigin and AllowCredentials cannot using together so open when you use WithOrigins
             .AllowAnyMethod()
+            .AllowAnyHeader()
+            //.WithHeaders("Content-Type", "Authorization")
             .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
     });
 });
-// ------- CORS -------
+#endregion
 
 
-// ------- Rate Limiter -------
+#region ------- Rate Limiter -------
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.AddSlidingWindowLimiter(policyName: "policy_rate_limiter", slidingOptions =>
     {
         slidingOptions.PermitLimit = 15;
-        slidingOptions.Window = TimeSpan.FromSeconds(3);
+        slidingOptions.Window = TimeSpan.FromSeconds(5);
         slidingOptions.SegmentsPerWindow = 4;
         slidingOptions.QueueLimit = 5;
         slidingOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
     });
 });
-// ------- Rate Limiter -------
+#endregion
 
 
-// ------- Logger Implementation -------
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Information()
-    .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
-    .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Warning)
-    .Enrich.FromLogContext()
-    .WriteTo.Logger(lc => lc
-        .Filter.ByIncludingOnly(Matching.WithProperty("Target", (object p) => p.ToString() == "Validation"))
-        .WriteTo.File("Logs/Validation/validation.log", rollingInterval: RollingInterval.Day,
-            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}"))
-    .WriteTo.Logger(lc => lc
-        .Filter.ByIncludingOnly(Matching.WithProperty("Target", (object p) => p.ToString() == "Application"))
-        .WriteTo.File("Logs/Application/application.log", rollingInterval: RollingInterval.Day,
-            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}"))
-    .WriteTo.Logger(lc => lc
-        .Filter.ByIncludingOnly(Matching.WithProperty("Target", (object p) => p.ToString() == "Business"))
-        .WriteTo.File("Logs/Business/business.log", rollingInterval: RollingInterval.Day,
-            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}"))
-    .WriteTo.Logger(lc => lc
-        .Filter.ByIncludingOnly(Matching.WithProperty("Target", (object p) => p.ToString() == "DataAccess"))
-        .WriteTo.File("Logs/DataAccess/dataAccess.log", rollingInterval: RollingInterval.Day,
-            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}"))
-    .WriteTo.Logger(lc => lc
-        .Filter.ByExcluding(Matching.WithProperty<string>("Target", _ => true))
-        .WriteTo.File("Logs/Other/others.log", rollingInterval: RollingInterval.Day,
-            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}"))
-    .CreateLogger();
-
-builder.Host.UseSerilog();
-// ------- Logger Implementation -------
-
-
-// ------- Layer Registrations -------
+#region ------- Layer Registrations -------
 builder.Services.AddModelServices();
-builder.Services.AddCoreServices(builder.Configuration);
+builder.Services.AddCoreServices(builder);
 builder.Services.AddDataAccessServices(builder.Configuration);
 builder.Services.AddBusinessServices(builder.Configuration);
-// ------- Layer Registrations -------
+#endregion
 
 
-// ------- Autofac Modules -------
-builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory())
-    .ConfigureContainer<ContainerBuilder>(builder =>
-    {
-        builder.RegisterModule(new Core.AutofacModule());
-        builder.RegisterModule(new DataAccess.AutofacModule());
-        builder.RegisterModule(new Business.AutofacModule());
-    });
-// ------- Autofac Modules -------
-
-
-// ------- IDENTITY -------
-builder.Services.AddSingleton<TokenSettings>(new TokenSettings());
+#region ------- IDENTITY -------
+TokenSettings tokenSettings = builder.Configuration.GetSection("TokenSettings").Get<TokenSettings>() ?? new();
+builder.Services.AddSingleton(tokenSettings);
 
 builder.Services
     .AddIdentity<User, IdentityRole<Guid>>(options =>
@@ -134,13 +93,13 @@ builder.Services
     .AddDefaultTokenProviders();
 
 builder.Services.AddAuthorization();
-// ------- IDENTITY -------
+#endregion
 
 
-// ------- Cookie Options -------
+#region ------- Cookie Options -------
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+    options.ExpireTimeSpan = TimeSpan.FromHours(3);
     options.SlidingExpiration = true;
     options.AccessDeniedPath = "/Error/Forbidden";
     options.LogoutPath = "/Account/Logout";
@@ -153,27 +112,89 @@ builder.Services.ConfigureApplicationCookie(options =>
         SecurePolicy = CookieSecurePolicy.Always
     };
 });
-// ------- Cookie Options -------
+#endregion
 
 
-// ------- Action Filters -------
-builder.Services.AddScoped(typeof(WebUI.Utils.ActionFilters.ValidationFilter<>));
-// ------- Action Filters -------
+
+#region ------- ForwardedHeaders -------
+// This middleware extracts the original values of the client request forwarded by the proxy and makes them available to you as first-hand values of the Request object
+// so you don't need to directly access HTTP requests to extract the values of X-Forwarded-* headers
+// now you can read real client IP with context.Connection.RemoteIpAddress 
+//var forwardedHeadersOptions = new ForwardedHeadersOptions
+//{
+//    ForwardedHeaders =
+//        ForwardedHeaders.XForwardedFor |
+//        ForwardedHeaders.XForwardedProto,
+
+//    // Add your proxy server IP address here if needed
+//    KnownProxies = {
+//        IPAddress.Parse("")
+//    }
+//};
+#endregion
 
 
 var app = builder.Build();
 
+
+#region ------- Exception Handle Middleware -------
 app.UseMiddleware<ExceptionHandleMiddleware>();
+#endregion
 
-//app.UseStaticFiles();
+app.UseStaticFiles();
 
-if (!app.Environment.IsDevelopment())
+
+if (app.Environment.IsDevelopment())
+{
+
+    #region ------- ForwardedHeaders -------
+    //forwardedHeadersOptions.KnownNetworks.Clear();
+    //forwardedHeadersOptions.KnownProxies.Clear(); 
+    #endregion
+}
+else
 {
     app.UseExceptionHandler("/Home/InvalidProcess");
 
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
+
+    // ------- ForwardedHeaders -------
+    // ###### only use if your app is behind a proxy/reverse proxy ######
+    //forwardedHeadersOptions.KnownNetworks.Add(
+    //    new Microsoft.AspNetCore.HttpOverrides.IPNetwork(IPAddress.Parse("10.0.0.0"), 8) // Add your proxy/reverse proxy is in the internal network IP range if needed 
+    //);
+    // app.UseForwardedHeaders(forwardedHeadersOptions);
+    // ------- ForwardedHeaders -------
 }
+
+
+#region ------- Request Logger -------
+app.UseSerilogRequestLogging(options =>
+{
+    options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+
+    options.GetLevel = (httpContext, elapsed, ex) =>
+    {
+        return (ex != null || httpContext.Response.StatusCode >= 500) ? LogEventLevel.Error :
+        (httpContext.Response.StatusCode >= 400) ? LogEventLevel.Warning : LogEventLevel.Information;
+    };
+
+    options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+    {
+        diagnosticContext.Set("RequestScheme", httpContext.Request.Scheme);
+        diagnosticContext.Set("ClientIP", httpContext.Connection.RemoteIpAddress != null ? httpContext.Connection.RemoteIpAddress.ToString() : "unknown");
+        diagnosticContext.Set("UserAgent", httpContext.Request.Headers["User-Agent"].ToString());
+    };
+});
+#endregion
+
+
+#region ------- Localization Options -------
+var requestLocalizationOptions = app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value;
+app.UseRequestLocalization(requestLocalizationOptions);
+#endregion
+
+
 app.UseStatusCodePagesWithReExecute("/Error/NotFound");
 
 app.UseHttpsRedirection();

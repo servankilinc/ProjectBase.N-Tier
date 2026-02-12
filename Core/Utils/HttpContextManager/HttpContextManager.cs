@@ -1,108 +1,130 @@
 using Core.Enums;
+using Core.Utils.Localization;
+using Core.Utils.ResultPattern;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using System.Security.Claims;
 
 namespace Core.Utils.HttpContextManager;
 
-public class HttpContextManager
+public class HttpContextManager : IHttpContextManager
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
-    public HttpContextManager(IHttpContextAccessor httpContextAccessor) => _httpContextAccessor = httpContextAccessor;
-
-    public string? GetUserId()
+    private readonly LocalizationSettings _localizationSettings;
+    public HttpContextManager(IHttpContextAccessor httpContextAccessor, LocalizationSettings localizationSettings)
     {
-        if (_httpContextAccessor.HttpContext == null) throw new Exception("Not exist HttpContext inside HttpContextManager.GetUserId!");
-
-        return _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        _httpContextAccessor = httpContextAccessor;
+        _localizationSettings = localizationSettings;
     }
-    public string? GetUserAgent()
-    {
-        if (_httpContextAccessor.HttpContext == null) throw new Exception("Not exist HttpContext inside HttpContextManager.GetUserAgent!");
 
-        return _httpContextAccessor.HttpContext.Request.Headers.UserAgent.ToString();
-    }
-    public string? GetClientIp()
+    public Result<string> GetNameIdentifier()
     {
-        if (_httpContextAccessor.HttpContext == null) throw new Exception("Not exist HttpContext inside HttpContextManager.GetClientIp!");
+        if (_httpContextAccessor.HttpContext == null) return Result<string>.Failure("Not exist HttpContext inside HttpContextManager.GetNameIdentifier!");
 
-        if (_httpContextAccessor.HttpContext.Request.Headers.ContainsKey("X-Forwarded-For"))
-            return _httpContextAccessor.HttpContext.Request.Headers["X-Forwarded-For"];
-        return _httpContextAccessor.HttpContext.Connection.RemoteIpAddress?.ToString();
+        var id = _httpContextAccessor.HttpContext.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return string.IsNullOrWhiteSpace(id) ? Result<string>.NotFound() : Result<string>.Success(id);
     }
-    public bool IsMobile()
-    {
-        if (_httpContextAccessor.HttpContext == null) throw new Exception("Not exist HttpContext inside HttpContextManager.IsMobile!");
 
-        var appPlatform = _httpContextAccessor.HttpContext.Request.Headers["X-App-Platform"];
-        return appPlatform.ToString().ToLowerInvariant() == "mobile".ToLowerInvariant();
-    }
-    public string GetCurrentCulture()
+    public Result<string> GetUserAgent()
     {
-        string defaultCulture = "tr-TR";
-        if (_httpContextAccessor.HttpContext == null) return defaultCulture;
+        if (_httpContextAccessor.HttpContext == null) return Result<string>.Failure("Not exist HttpContext inside HttpContextManager.GetUserAgent!");
+
+        var userAggent = _httpContextAccessor.HttpContext.Request.Headers.UserAgent.ToString();
+        return string.IsNullOrWhiteSpace(userAggent) ? Result<string>.NotFound() : Result<string>.Success(userAggent);
+    }
+
+    public Result<string> GetClientIp()
+    {
+        if (_httpContextAccessor.HttpContext == null) return Result<string>.Failure("Not exist HttpContext inside HttpContextManager.GetClientIp!");
+
+        var ipAddress = _httpContextAccessor.HttpContext.Connection.RemoteIpAddress?.ToString();
+        return string.IsNullOrWhiteSpace(ipAddress) ? Result<string>.NotFound() : Result<string>.Success(ipAddress);
+    }
+
+    public Result<string> GetCurrentCulture()
+    {
+        string defaultCulture = _localizationSettings.DefaultLanguage.GetDescription();
+        if (_httpContextAccessor.HttpContext == null) return Result<string>.Success(defaultCulture);
 
         var cookieName = CookieRequestCultureProvider.DefaultCookieName;
         var cookieValue = _httpContextAccessor.HttpContext.Request.Cookies[cookieName];
-        if (string.IsNullOrWhiteSpace(cookieValue)) return defaultCulture;
+        if (string.IsNullOrWhiteSpace(cookieValue)) return Result<string>.Success(defaultCulture);
 
         var requestCulture = CookieRequestCultureProvider.ParseCookieValue(cookieValue);
         var cultureInfo = requestCulture?.Cultures.FirstOrDefault().Value;
-        if (string.IsNullOrWhiteSpace(cultureInfo)) return defaultCulture;
+        if (string.IsNullOrWhiteSpace(cultureInfo)) return Result<string>.Success(defaultCulture);
 
-        return cultureInfo;
+        return Result<string>.Success(cultureInfo);
     }
-    public Languages GetCurrentLanguage()
+
+    public Result<Language> GetCurrentLanguage()
     {
-        string cultureInfo = GetCurrentCulture();
-        return EnumExtensions.GetEnumByDescription<Languages>(cultureInfo);
+        Result<string> cultureInfo = GetCurrentCulture();
+        if (!cultureInfo.IsSuccess) return Result<Language>.Failure(cultureInfo.Message);
+
+        Language language = GlobalExtensions.GetEnumByDescription<Language>(cultureInfo.Data);
+        return Result<Language>.Success(language);
     }
-    public int GetCurrentLanguageId()
+
+    public Result<byte> GetCurrentLanguageId()
     {
-        string cultureInfo = GetCurrentCulture();
-        return (byte)EnumExtensions.GetEnumByDescription<Languages>(cultureInfo);
+        Result<string> cultureInfo = GetCurrentCulture();
+        if (!cultureInfo.IsSuccess) return Result<byte>.Failure(cultureInfo.Message);
+
+        return Result<byte>.Success((byte)GlobalExtensions.GetEnumByDescription<Language>(cultureInfo.Data));
     }
-    public bool SetCurrentCulture(string culture)
+
+    public Result SetCurrentCulture(string culture)
     {
-        if (_httpContextAccessor.HttpContext == null) throw new Exception("Not exist HttpContext inside HttpContextManager.SetCurrentCulture!");
+        if (_httpContextAccessor.HttpContext == null) return Result.Failure("Not exist HttpContext inside HttpContextManager.SetCurrentCulture!");
+
         var cookieName = CookieRequestCultureProvider.DefaultCookieName;
         var cookieValue = CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture));
+
         _httpContextAccessor.HttpContext.Response.Cookies.Append(cookieName, cookieValue, new CookieOptions
         {
-            Expires = DateTimeOffset.UtcNow.AddYears(1),
+            Expires = DateTimeOffset.UtcNow.AddMonths(1),
             IsEssential = true,
             Secure = true,
             HttpOnly = false,
             SameSite = SameSiteMode.Lax,
         });
-        return true;
-    }
-    public void AddRefreshTokenToCookie(string refreshToken, DateTime expirationUtc)
-    {
-        if (_httpContextAccessor.HttpContext == null) throw new Exception("Not exist HttpContext inside HttpContextManager.AddRefreshTokenToCookie!");
 
-        _httpContextAccessor.HttpContext.Response.Cookies.Append("RefreshToken", refreshToken, new CookieOptions
+        return Result.Success();
+    }
+
+    public Result<string> GetRefreshTokenFromCookie()
+    {
+        if (_httpContextAccessor.HttpContext == null) return Result<string>.Failure("Not exist HttpContext inside HttpContextManager.GetRefreshTokenFromCookie!");
+
+        string? refreshToken = _httpContextAccessor.HttpContext.Request.Cookies["Auth_RefreshToken"];
+        if (string.IsNullOrWhiteSpace(refreshToken)) return Result<string>.Failure("Not exist refresh token inside cookie!");
+
+        return Result<string>.Success(refreshToken);
+    }
+
+    public Result AddRefreshTokenToCookie(string refreshToken, DateTime expirationUtc)
+    {
+        if (_httpContextAccessor.HttpContext == null) return Result.Failure("Not exist HttpContext inside HttpContextManager.AddRefreshTokenToCookie!");
+
+        _httpContextAccessor.HttpContext.Response.Cookies.Append("Auth_RefreshToken", refreshToken, new CookieOptions
         {
             Secure = true,
             HttpOnly = true,
             Expires = expirationUtc,
             SameSite = SameSiteMode.Lax,
-            //Path = "/Account/RefreshAuth"
+            Path = "/Account/RefreshAuth"
         });
+
+        return Result.Success();
     }
-    public string GetRefreshTokenFromCookie()
+
+    public Result DeletetRefreshTokenFromCookie()
     {
-        if (_httpContextAccessor.HttpContext == null) throw new Exception("Not exist HttpContext inside HttpContextManager.GetRefreshTokenFromCookie!");
+        if (_httpContextAccessor.HttpContext == null) Result.Failure("Not exist HttpContext inside HttpContextManager.DeletetRefreshTokenFromCookie!");
 
-        string? refreshToken = _httpContextAccessor.HttpContext.Request.Cookies["RefreshToken"];
-        if (string.IsNullOrWhiteSpace(refreshToken)) throw new Exception("Not exist refresh token inside cookie!");
+        _httpContextAccessor.HttpContext?.Response.Cookies.Delete("Auth_RefreshToken");
 
-        return refreshToken;
-    }
-    public void DeletetRefreshTokenFromCookie()
-    {
-        if (_httpContextAccessor.HttpContext == null) throw new Exception("Not exist HttpContext inside HttpContextManager.DeletetRefreshTokenFromCookie!");
-
-        _httpContextAccessor.HttpContext?.Response.Cookies.Delete("Key_RefreshToken");
+        return Result.Success();
     }
 }

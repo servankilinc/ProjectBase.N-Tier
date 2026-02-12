@@ -3,7 +3,6 @@
 /// <summary>
 /// Dont use '.' in the key, use '_' instead.
 /// </summary>
-/// <param name="key"></param>
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
 public class LocalizablePropAttribute : Attribute
 {

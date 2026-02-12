@@ -1,7 +1,6 @@
 ﻿using Core.Utils.Auth;
-using Core.Utils.CrossCuttingConcerns;
-using Core.Utils.ExceptionHandle.Exceptions;
 using Core.Utils.HttpContextManager;
+using Core.Utils.ResultPattern;
 using Microsoft.IdentityModel.Tokens;
 using Model.Entities;
 using System.IdentityModel.Tokens.Jwt;
@@ -11,19 +10,18 @@ using System.Text;
 
 namespace Business.Utils.TokenService;
 
-[ExceptionHandler]
 public class TokenService : ITokenService
 {
     private readonly TokenSettings _tokenSettings;
-    private readonly HttpContextManager _httpContextManager;
-    public TokenService(TokenSettings tokenSettings, HttpContextManager httpContextManager)
+    private readonly IHttpContextManager _httpContextManager;
+    public TokenService(TokenSettings tokenSettings, IHttpContextManager httpContextManager)
     {
         _tokenSettings = tokenSettings;
         _httpContextManager = httpContextManager;
     }
 
 
-    public AccessToken GenerateAccessToken(IList<Claim> claims)
+    public Result<AccessToken> GenerateAccessToken(IList<Claim> claims)
     {
         DateTime expiration = DateTime.UtcNow.AddMinutes(_tokenSettings.AccessTokenExpiration);
         SecurityKey securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_tokenSettings.SecurityKey));
@@ -37,24 +35,44 @@ public class TokenService : ITokenService
             signingCredentials: signingCredentials
         );
 
-        string? token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
+        var token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
+        if (string.IsNullOrWhiteSpace(token)) return Result<AccessToken>.Failure("Access token could not be created!");
 
-        return new AccessToken(token, expiration);
+        AccessToken accessToken = new AccessToken(token, expiration);
+        return Result<AccessToken>.Success(accessToken);
     }
 
-    public RefreshToken GenerateRefreshToken(User user)
+    public Result<RefreshToken> GenerateRefreshToken(User user, string tokenValue, string clientType, Guid? deviceId = default)
     {
-        string? ipAddress = _httpContextManager.GetClientIp();
-        if (string.IsNullOrEmpty(ipAddress)) throw new GeneralException("Could not read client ip address for generating refresh token!");
+        var ipAddress = _httpContextManager.GetClientIp();
 
-        return new RefreshToken
+        string tokenHash = HashToken(tokenValue);
+
+        var refreshToken = new RefreshToken
         {
             UserId = user.Id,
-            IpAddress = ipAddress.Trim(),
-            Token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)),
+            DeviceId = deviceId ?? Guid.NewGuid(),
+            ClientType = clientType,
+            IpAddress = ipAddress.IsSuccess ? ipAddress.Data : string.Empty,
+            Token = tokenHash,
             ExpirationUtc = DateTime.UtcNow.AddMinutes(_tokenSettings.RefreshTokenExpiration),
             CreateDateUtc = DateTime.UtcNow,
-            TTL = _tokenSettings.RefreshTokenTTL
+            TTL = _tokenSettings.RefreshTokenTTL,
+            IsRevoked = false
         };
+
+        return Result<RefreshToken>.Success(refreshToken);
+    }
+
+    public string GenerateRandomNumber()
+    {
+        return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+    }
+
+    public string HashToken(string token)
+    {
+        using var sha256 = SHA256.Create();
+        byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(token));
+        return Convert.ToBase64String(bytes);
     }
 }

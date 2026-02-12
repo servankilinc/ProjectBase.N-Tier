@@ -37,30 +37,8 @@ public interface IAuditableEntity
 }
 
 /// <summary>
-/// Interface for entities that support logging.
-/// </summary>
-public interface ILoggableEntity
-{
-}
-
-/// <summary>
 /// Interface for entities that support archiving.
 /// </summary>
 public interface IArchivableEntity
 {
-}
-
-/// <summary>
-/// Interface for entities that support localization.
-/// </summary>
-public interface ILocalizableEntity
-{
-}
-
-/// <summary>
-/// Interface for entities that support localization.
-/// </summary>
-public interface ILocalizableEntity<TId> : ILocalizableEntity
-{
-    public TId Id { get; set; }
 }

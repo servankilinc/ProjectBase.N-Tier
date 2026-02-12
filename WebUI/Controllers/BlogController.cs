@@ -9,7 +9,7 @@ using Model.Dtos.Blog_;
 namespace WebUI.Controllers;
 
 [Authorize]
-public class BlogController : Controller
+public class BlogController : BaseController
 {
     private readonly IBlogService _blogService;
     private readonly ICategoryService _categoryService;

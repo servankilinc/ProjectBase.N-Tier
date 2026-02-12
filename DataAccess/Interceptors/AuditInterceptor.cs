@@ -8,11 +8,11 @@ namespace DataAccess.Interceptors;
 
 public sealed class AuditInterceptor : SaveChangesInterceptor
 {
-    private readonly HttpContextManager _httpContextManager;
-    public AuditInterceptor(HttpContextManager httpContextManager) => _httpContextManager = httpContextManager;
+    private readonly IHttpContextManager _httpContextManager;
+    public AuditInterceptor(IHttpContextManager httpContextManager) => _httpContextManager = httpContextManager;
 
 
-    //  ****************************** SYNC VERSION ******************************
+    #region SYNC VERSION
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
         if (eventData.Context is null) return base.SavingChanges(eventData, result);
@@ -22,16 +22,18 @@ public sealed class AuditInterceptor : SaveChangesInterceptor
 
         if (auditableEntries.Any())
         {
+            var requesterId = _httpContextManager.GetNameIdentifier();
+
             foreach (EntityEntry<IAuditableEntity> entry in auditableEntries)
             {
                 if (entry.State == EntityState.Added)
                 {
-                    entry.Entity.CreatedBy = _httpContextManager.GetUserId();
+                    entry.Entity.CreatedBy = requesterId.IsSuccess ? requesterId.Data : string.Empty;
                     entry.Entity.CreateDateUtc = DateTime.UtcNow;
                 }
                 else if (entry.State == EntityState.Modified)
                 {
-                    entry.Entity.UpdatedBy = _httpContextManager.GetUserId();
+                    entry.Entity.UpdatedBy = requesterId.IsSuccess ? requesterId.Data : string.Empty;
                     entry.Entity.UpdateDateUtc = DateTime.UtcNow;
                 }
             }
@@ -39,9 +41,10 @@ public sealed class AuditInterceptor : SaveChangesInterceptor
 
         return base.SavingChanges(eventData, result);
     }
+    #endregion
 
 
-    //  ****************************** ASYNC VERSION ******************************
+    #region ASYNC VERSION
     public override ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
     {
         if (eventData.Context is null) return base.SavingChangesAsync(eventData, result, cancellationToken);
@@ -51,16 +54,18 @@ public sealed class AuditInterceptor : SaveChangesInterceptor
 
         if (auditableEntries.Any())
         {
+            var requesterId = _httpContextManager.GetNameIdentifier();
+
             foreach (EntityEntry<IAuditableEntity> entry in auditableEntries)
             {
                 if (entry.State == EntityState.Added)
                 {
-                    entry.Entity.CreatedBy = _httpContextManager.GetUserId();
+                    entry.Entity.CreatedBy = requesterId.IsSuccess ? requesterId.Data : string.Empty;
                     entry.Entity.CreateDateUtc = DateTime.UtcNow;
                 }
                 else if (entry.State == EntityState.Modified)
                 {
-                    entry.Entity.UpdatedBy = _httpContextManager.GetUserId();
+                    entry.Entity.UpdatedBy = requesterId.IsSuccess ? requesterId.Data : string.Empty;
                     entry.Entity.UpdateDateUtc = DateTime.UtcNow;
                 }
             }
@@ -68,4 +73,5 @@ public sealed class AuditInterceptor : SaveChangesInterceptor
 
         return base.SavingChangesAsync(eventData, result, cancellationToken);
     }
+    #endregion
 }

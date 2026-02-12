@@ -2,292 +2,205 @@
 using Business.Abstract;
 using Business.ServiceBase;
 using Core.BaseRequestModels;
-using Core.Model;
-using Core.Utils.CrossCuttingConcerns;
 using Core.Utils.Datatable;
 using Core.Utils.Pagination;
+using Core.Utils.ResultPattern;
+using Core.Utils.Validation;
 using DataAccess.Abstract;
+using DataAccess.UoW;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Model.Dtos.BlogComment_;
+using Model.Dtos.BlogComment.Commands;
+using Model.Dtos.BlogComment.Queries;
 using Model.Entities;
 using System.Linq.Expressions;
 
 namespace Business.Concrete;
 
-[ExceptionHandler]
 public class BlogCommentService : ServiceBase<BlogComment, IBlogCommentRepository>, IBlogCommentService
 {
-    public BlogCommentService(IBlogCommentRepository blogCommentRepository, IMapper mapper) : base(blogCommentRepository, mapper)
+    public BlogCommentService(IUnitOfWork unitOfWork, IValidationService validationService, IMapper mapper) : base(unitOfWork.BlogComments, validationService, mapper)
     {
     }
 
-    #region Get Entity
-    public async Task<BlogComment?> GetAsync(Expression<Func<BlogComment, bool>> where, CancellationToken cancellationToken = default)
+    #region Get
+    public async Task<Result<BlogComment>> GetAsync(Expression<Func<BlogComment, bool>> where, CancellationToken cancellationToken = default)
     {
-        var result = await _GetAsync(
+        var result = await base.GetAsync(
             where: where,
-            tracking: false,
             cancellationToken: cancellationToken
         );
-
         return result;
     }
 
-    public async Task<ICollection<BlogComment>?> GetListAsync(Expression<Func<BlogComment, bool>>? where = null, CancellationToken cancellationToken = default)
+    public async Task<Result<BlogComment>> GetAsync(Guid Id, CancellationToken cancellationToken = default)
     {
-        var result = await _GetListAsync(
-             where: where,
-             tracking: false,
-             cancellationToken: cancellationToken
-         );
+        var result = await base.GetAsync(
+            where: f => f.Id == Id,
+            cancellationToken: cancellationToken
+        );
+        return result;
+    }
 
+    public async Task<Result<BlogCommentBasicResponseDto>> GetBasicAsync(Guid Id, CancellationToken cancellationToken = default)
+    {
+        var result = await base.GetAsync<BlogCommentBasicResponseDto>(
+            where: f => f.Id == Id,
+            cancellationToken: cancellationToken
+        );
+        return result;
+    }
+
+    public async Task<Result<BlogCommentDetailResponseDto>> GetDetailAsync(Guid Id, CancellationToken cancellationToken = default)
+    {
+        var result = await base.GetAsync<BlogCommentDetailResponseDto>(
+            where: f => f.Id == Id,
+            include: i => i
+                .Include(x => x.Blog)
+                .Include(x => x.User),
+            cancellationToken: cancellationToken
+        );
         return result;
     }
     #endregion
 
-    #region Get Generic
-    public async Task<TResponse?> GetAsync<TResponse>(Expression<Func<BlogComment, bool>> where, CancellationToken cancellationToken = default) where TResponse : IDto
+    #region GetList
+    public async Task<Result<ICollection<BlogComment>>> GetListAsync(Expression<Func<BlogComment, bool>>? where = null, CancellationToken cancellationToken = default)
     {
-        var result = await _GetAsync<TResponse>(
+        var result = await base.GetListAsync(
             where: where,
-            tracking: false,
             cancellationToken: cancellationToken
         );
-
         return result;
     }
 
-    public async Task<ICollection<TResponse>?> GetListAsync<TResponse>(Expression<Func<BlogComment, bool>>? where = null, CancellationToken cancellationToken = default) where TResponse : IDto
+    public async Task<Result<ICollection<BlogComment>>> GetListAsync(DynamicRequest? request, CancellationToken cancellationToken = default)
     {
-        var result = await _GetListAsync<TResponse>(
-            where: where,
+        var result = await base.GetListAsync(
+            filter: request?.Filter,
+            sorts: request?.Sorts,
             tracking: false,
             cancellationToken: cancellationToken
         );
+        return result;
+    }
+    public async Task<Result<ICollection<BlogCommentBasicResponseDto>>> GetBasicListAsync(DynamicRequest? request, CancellationToken cancellationToken = default)
+    {
+        var result = await base.GetListAsync<BlogCommentBasicResponseDto>(
+            filter: request?.Filter,
+            sorts: request?.Sorts,
+            cancellationToken: cancellationToken
+        );
+        return result;
+    }
 
+    public async Task<Result<ICollection<BlogCommentDetailResponseDto>>> GetDetailListAsync(DynamicRequest? request, CancellationToken cancellationToken = default)
+    {
+        var result = await base.GetListAsync<BlogCommentDetailResponseDto>(
+            filter: request?.Filter,
+            sorts: request?.Sorts,
+            include: i => i
+                .Include(x => x.Blog)
+                .Include(x => x.User),
+            cancellationToken: cancellationToken
+        );
         return result;
     }
     #endregion
 
     #region SelectList
-    public async Task<SelectList> GetSelectListAsync(Expression<Func<BlogComment, bool>>? where = default, CancellationToken cancellationToken = default)
+    public async Task<Result<SelectList>> SelectListAsync(Expression<Func<BlogComment, bool>>? where = default, CancellationToken cancellationToken = default)
     {
-        var result = new SelectList(await _GetListAsync(
+        var list = await base.GetListAsync(
             select: s => new
             {
                 s.Id,
                 s.Comment
             },
             where: where,
-            tracking: false,
-            cancellationToken: cancellationToken
-        ), "Id", "Comment");
-
-        return result;
-    }
-    #endregion
-
-    #region Get
-    public async Task<BlogComment?> GetAsync(Guid Id, CancellationToken cancellationToken = default)
-    {
-        if (Id == default) throw new ArgumentNullException(nameof(Id));
-
-        var result = await _GetAsync(
-            where: f => f.Id == Id,
-            tracking: false,
             cancellationToken: cancellationToken
         );
+        var selectList = new SelectList(list.Data ?? new List<object>(), "Id", "Comment");
 
-        return result;
-    }
-
-    public async Task<ICollection<BlogComment>?> GetAllAsync(DynamicRequest? request, CancellationToken cancellationToken = default)
-    {
-        var result = await _GetListAsync(
-            filter: request?.Filter,
-            sorts: request?.Sorts,
-            tracking: false,
-            cancellationToken: cancellationToken
-        );
-
-        return result;
-    }
-
-    public async Task<PaginationResponse<BlogComment>> GetListAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
-    {
-        var result = await _PaginationAsync(
-            paginationRequest: request.PaginationRequest,
-            filter: request.Filter,
-            sorts: request.Sorts,
-            cancellationToken: cancellationToken
-        );
-
-        return result;
-    }
-    #endregion
-
-    #region GetBasic
-    public async Task<BlogCommentBasicResponseDto?> GetByBasicAsync(Guid Id, CancellationToken cancellationToken = default)
-    {
-        if (Id == default) throw new ArgumentNullException(nameof(Id));
-
-        var result = await _GetAsync<BlogCommentBasicResponseDto>(
-            where: f => f.Id == Id,
-            tracking: false,
-            cancellationToken: cancellationToken
-        );
-
-        return result;
-    }
-
-    public async Task<ICollection<BlogCommentBasicResponseDto>?> GetAllByBasicAsync(DynamicRequest? request, CancellationToken cancellationToken = default)
-    {
-        var result = await _GetListAsync<BlogCommentBasicResponseDto>(
-            filter: request?.Filter,
-            sorts: request?.Sorts,
-            tracking: false,
-            cancellationToken: cancellationToken
-        );
-
-        return result;
-    }
-
-    public async Task<PaginationResponse<BlogCommentBasicResponseDto>> GetListByBasicAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
-    {
-        var result = await _PaginationAsync<BlogCommentBasicResponseDto>(
-            paginationRequest: request.PaginationRequest,
-            filter: request.Filter,
-            sorts: request.Sorts,
-            cancellationToken: cancellationToken
-        );
-
-        return result;
-    }
-    #endregion
-
-    #region GetDetail
-    public async Task<BlogCommentDetailResponseDto?> GetByDetailAsync(Guid Id, CancellationToken cancellationToken = default)
-    {
-        if (Id == Guid.Empty) throw new ArgumentNullException(nameof(Id));
-
-        var result = await _GetAsync<BlogCommentDetailResponseDto>(
-            where: f => f.Id == Id,
-            include: i => i
-                .Include(x => x.User),
-            tracking: false,
-            cancellationToken: cancellationToken
-        );
-
-        return result;
-    }
-
-    public async Task<ICollection<BlogCommentDetailResponseDto>?> GetAllByDetailAsync(DynamicRequest? request, CancellationToken cancellationToken = default)
-    {
-        var result = await _GetListAsync<BlogCommentDetailResponseDto>(
-            filter: request?.Filter,
-            sorts: request?.Sorts,
-            include: i => i
-                .Include(x => x.User),
-            tracking: false,
-            cancellationToken: cancellationToken
-        );
-
-        return result;
-    }
-
-    public async Task<PaginationResponse<BlogCommentDetailResponseDto>> GetListByDetailAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
-    {
-        var result = await _PaginationAsync<BlogCommentDetailResponseDto>(
-            paginationRequest: request.PaginationRequest,
-            filter: request.Filter,
-            sorts: request.Sorts,
-            include: i => i
-                .Include(x => x.User),
-            cancellationToken: cancellationToken
-        );
-
-        return result;
+        return Result<SelectList>.Success(selectList);
     }
     #endregion
 
     #region Create
-    [Validation(typeof(BlogCommentCreateDto))]
-    public async Task<BlogCommentBasicResponseDto> CreateAsync(BlogCommentCreateDto request, CancellationToken cancellationToken = default)
+    public async Task<Result<BlogCommentBasicResponseDto>> CreateAsync(BlogCommentCreateDto request, CancellationToken cancellationToken = default)
     {
-        var result = await _AddAsync<BlogCommentCreateDto, BlogCommentBasicResponseDto>(request, cancellationToken);
-
+        var result = await base.CreateAsync<BlogCommentCreateDto, BlogCommentBasicResponseDto>(request, cancellationToken);
         return result;
     }
     #endregion
 
     #region Update
-    [Validation(typeof(BlogCommentUpdateDto))]
-    public async Task<BlogCommentBasicResponseDto> UpdateAsync(BlogCommentUpdateDto request, CancellationToken cancellationToken = default)
+    public async Task<Result<BlogCommentBasicResponseDto>> UpdateAsync(BlogCommentUpdateDto request, CancellationToken cancellationToken = default)
     {
-        var result = await _UpdateAsync<BlogCommentUpdateDto, BlogCommentBasicResponseDto>(updateModel: request, where: f => f.Id == request.Id, cancellationToken);
-
+        var result = await base.UpdateAsync<BlogCommentUpdateDto, BlogCommentBasicResponseDto>(updateModel: request, where: f => f.Id == request.Id, cancellationToken);
         return result;
     }
     #endregion
 
     #region Delete
-    public async Task DeleteAsync(Guid Id, CancellationToken cancellationToken = default)
+    public async Task<Result> DeleteAsync(Guid Id, CancellationToken cancellationToken = default)
     {
-        if (Id == Guid.Empty) throw new ArgumentNullException(nameof(Id));
+        var result = await base.DeleteAsync(where: f => f.Id == Id, cancellationToken);
+        return result;
+    }
 
-        await _DeleteAsync(where: f => f.Id == Id, cancellationToken);
+    public async Task<Result> UndoDeleteAsync(Guid Id, CancellationToken cancellationToken = default)
+    {
+        var result = await base.UndoDeleteAsync(where: f => f.Id == Id, cancellationToken);
+        return result;
     }
     #endregion
 
-    #region Datatable Methods
-    public async Task<DatatableResponseClientSide<BlogComment>> DatatableClientSideAsync(DynamicRequest request, CancellationToken cancellationToken = default)
+    #region Pagination
+    public async Task<Result<PaginationResponse<BlogComment>>> PaginationAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
     {
-        var result = await _DatatableClientSideAsync(
-            filter: request.Filter,
-            sorts: request.Sorts,
+        var result = await base.PaginationAsync(
+            paginationRequest: request,
             cancellationToken: cancellationToken
         );
-
         return result;
     }
 
-    public async Task<DatatableResponseServerSide<BlogComment>> DatatableServerSideAsync(DynamicDatatableServerSideRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<PaginationResponse<BlogCommentReportDto>>> PaginationReportAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
     {
-        var result = await _DatatableServerSideAsync(
-            datatableRequest: request.GetDatatableRequest(),
-            filter: request.Filter,
-            cancellationToken: cancellationToken
-        );
-
-        return result;
-    }
-
-    public async Task<DatatableResponseClientSide<BlogCommentReportDto>> DatatableClientSideByReportAsync(DynamicRequest request, CancellationToken cancellationToken = default)
-    {
-        var result = await _DatatableClientSideAsync<BlogCommentReportDto>(
-            filter: request.Filter,
-            sorts: request.Sorts,
+        var result = await base.PaginationAsync<BlogCommentReportDto>(
+            paginationRequest: request,
             include: i => i
                 .Include(x => x.Blog)
                 .Include(x => x.User),
             cancellationToken: cancellationToken
         );
-
         return result;
     }
+    #endregion
 
-    public async Task<DatatableResponseServerSide<BlogCommentReportDto>> DatatableServerSideByReportAsync(DynamicDatatableServerSideRequest request, CancellationToken cancellationToken = default)
+    #region Datatable
+    public async Task<Result<DatatableResponseClientSide<BlogCommentReportDto>>> DatatableClientSideAsync(DynamicDatatableRequest request, CancellationToken cancellationToken = default)
     {
-        var result = await _DatatableServerSideAsync<BlogCommentReportDto>(
-            datatableRequest: request.GetDatatableRequest(),
-            filter: request.Filter,
+        var result = await base.DatatableClientSideAsync<BlogCommentReportDto>(
+            datatableRequest: request,
             include: i => i
                 .Include(x => x.Blog)
                 .Include(x => x.User),
             cancellationToken: cancellationToken
         );
+        return result;
+    }
 
+    public async Task<Result<DatatableResponseServerSide<BlogCommentReportDto>>> DatatableServerSideAsync(DynamicDatatableRequest request, CancellationToken cancellationToken = default)
+    {
+        var result = await base.DatatableServerSideAsync<BlogCommentReportDto>(
+            datatableRequest: request,
+            include: i => i
+                .Include(x => x.Blog)
+                .Include(x => x.User),
+            cancellationToken: cancellationToken
+        );
         return result;
     }
     #endregion

@@ -5,12 +5,9 @@ namespace Core.Utils.Datatable;
 
 public static class QueryableDatatableExtension
 {
-    #region Server-Side Extension Methods
-    // ***************** Sync Version *****************
+    #region SERVER-SIDE VERSION
     public static DatatableResponseServerSide<TData> ToDatatableServerSide<TData>(this IQueryable<TData> query, DatatableRequest dataTableRequest)
     {
-        if (dataTableRequest == null) throw new ArgumentNullException(nameof(dataTableRequest));
-
         // 1. Count of Total Records
         int recordsTotal = query.Count();
 
@@ -23,25 +20,24 @@ public static class QueryableDatatableExtension
 
         // 4. Ordering 
         string? orderPredicate = GenerateOrderPredicate<TData>(dataTableRequest);
-        if (orderPredicate != null) query = query.OrderBy(orderPredicate);
+        if (!string.IsNullOrWhiteSpace(orderPredicate)) query = query.OrderBy(orderPredicate);
 
         // 5. Pagination
         query = query.Skip(dataTableRequest.Start).Take(dataTableRequest.Length);
 
+        var data = query.ToList();
+
         return new DatatableResponseServerSide<TData>
         {
-            Data = query.ToList(),
+            Data = data,
             Draw = dataTableRequest.Draw,
             RecordsTotal = recordsTotal,
             RecordsFiltered = recordsFiltered,
         };
     }
 
-    // ***************** Async Version *****************
     public static async Task<DatatableResponseServerSide<TData>> ToDatatableServerSideAsync<TData>(this IQueryable<TData> query, DatatableRequest dataTableRequest, CancellationToken cancellationToken = default)
     {
-        if (dataTableRequest == null) throw new ArgumentNullException(nameof(dataTableRequest));
-
         // 1. Count of Total Records
         int recordsTotal = await query.CountAsync();
 
@@ -54,7 +50,7 @@ public static class QueryableDatatableExtension
 
         // 4. Ordering 
         string? orderPredicate = GenerateOrderPredicate<TData>(dataTableRequest);
-        if (orderPredicate != null) query = query.OrderBy(orderPredicate);
+        if (!string.IsNullOrWhiteSpace(orderPredicate)) query = query.OrderBy(orderPredicate);
 
         // 5. Pagination
         query = query.Skip(dataTableRequest.Start).Take(dataTableRequest.Length);
@@ -71,9 +67,7 @@ public static class QueryableDatatableExtension
     }
     #endregion
 
-
-    #region Client-Side Extension Methods
-    // ***************** Sync Version *****************
+    #region CLIENT-SIDE VERSION
     public static DatatableResponseClientSide<TData> ToDatatableClientSide<TData>(this IQueryable<TData> query)
     {
         return new DatatableResponseClientSide<TData>()
@@ -82,7 +76,6 @@ public static class QueryableDatatableExtension
         };
     }
 
-    // ***************** Async Version *****************
     public static async Task<DatatableResponseClientSide<TData>> ToDatatableClientSideAsync<TData>(this IQueryable<TData> query, CancellationToken cancellationToken = default)
     {
         var data = await query.ToListAsync(cancellationToken);
@@ -94,12 +87,12 @@ public static class QueryableDatatableExtension
     #endregion
 
 
-    // ################# Helper Methods #################
+    #region HELPERS
     private static string? GenerateSearchPredicate<TData>(DatatableRequest dataTableRequest)
     {
-        if (dataTableRequest.Search == null || string.IsNullOrEmpty(dataTableRequest.Search.Value) || dataTableRequest.Columns == null) return null;
+        if (dataTableRequest.Search == null || string.IsNullOrWhiteSpace(dataTableRequest.Search.Value) || dataTableRequest.Columns == null) return null;
 
-        IEnumerable<Column>? searchableColumns = dataTableRequest.Columns!.Where(c => c.Searchable && !string.IsNullOrEmpty(c.Data)).ToList();
+        IEnumerable<Column>? searchableColumns = dataTableRequest.Columns!.Where(c => c.Searchable && !string.IsNullOrWhiteSpace(c.Data)).ToList();
 
         var props = typeof(TData)
             .GetProperties()
@@ -136,7 +129,7 @@ public static class QueryableDatatableExtension
         foreach (var orderItem in dataTableRequest.Order)
         {
             var column = dataTableRequest.Columns[orderItem.Column];
-            if (column == null || !column.Orderable || string.IsNullOrEmpty(column.Data)) continue;
+            if (column == null || !column.Orderable || string.IsNullOrWhiteSpace(column.Data)) continue;
 
             var key = column.Data.ToLower();
             if (props.TryGetValue(key, out var actualPropName))
@@ -149,4 +142,5 @@ public static class QueryableDatatableExtension
         if (orderList.Any()) return orderPredicate;
         return null;
     }
+    #endregion
 }

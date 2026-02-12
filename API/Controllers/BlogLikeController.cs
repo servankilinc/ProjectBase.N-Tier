@@ -1,125 +1,90 @@
+using API.Controllers.Base;
 using Business.Abstract;
-using Business.Concrete;
 using Core.BaseRequestModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Model.Dtos.BlogLike_;
+using Model.Dtos.BlogLike.Commands;
+using Model.Entities;
 
 namespace API.Controllers;
 
 [Authorize]
-[ApiController]
-[Route("api/[controller]")]
-public class BlogLikeController : ControllerBase
+public class BlogLikeController : BaseController
 {
     private readonly IBlogLikeService _blogLikeService;
-    public BlogLikeController(IBlogLikeService blogLikeService) => _blogLikeService = blogLikeService;
+    public BlogLikeController(ILogger<BlogLikeController> logger, IBlogLikeService blogLikeService) : base(logger) => _blogLikeService = blogLikeService;
 
 
-    #region GetEntity
-    [HttpGet("Get")]
+    #region Get
+    [HttpGet]
     public async Task<IActionResult> Get(Guid blogId, Guid userId)
     {
         var result = await _blogLikeService.GetAsync(BlogId: blogId, UserId: userId);
-
-        if (result == null) return NotFound();
-
-        return Ok(result);
+        return FromResult(result);
     }
 
-    [HttpPost("GetAll")]
-    public async Task<IActionResult> GetAll(DynamicRequest? request)
+    [HttpGet("base")]
+    public async Task<IActionResult> GetBasic(Guid blogId, Guid userId)
     {
-        var result = await _blogLikeService.GetAllAsync(request);
-
-        if (result == null) return NotFound();
-
-        return Ok(result);
+        var result = await _blogLikeService.GetBasicAsync(BlogId: blogId, UserId: userId);
+        return FromResult(result);
     }
 
-    [HttpPost("GetList")]
-    public async Task<IActionResult> GetList(DynamicPaginationRequest request)
+    [HttpGet("detail")]
+    public async Task<IActionResult> GetDetail(Guid blogId, Guid userId)
+    {
+        var result = await _blogLikeService.GetDetailAsync(BlogId: blogId, UserId: userId);
+        return FromResult(result);
+    }
+    #endregion
+
+    #region GetList
+    [HttpPost("list")]
+    public async Task<IActionResult> GetList(DynamicRequest? request)
     {
         var result = await _blogLikeService.GetListAsync(request);
-
-        if (result == null) return NotFound();
-
-        return Ok(result);
-    }
-    #endregion
-
-
-    #region GetBasic
-    [HttpGet("GetByBasic")]
-    public async Task<IActionResult> GetByBasic(Guid BlogId, Guid UserId)
-    {
-        var result = await _blogLikeService.GetByBasicAsync(BlogId, UserId);
-
-        if (result == null) return NotFound();
-
-        return Ok(result);
+        return FromResult(result);
     }
 
-    [HttpPost("GetAllByBasic")]
-    public async Task<IActionResult> GetAllByBasic(DynamicRequest? request)
+    [HttpPost("list/base")]
+    public async Task<IActionResult> GetBasicList(DynamicRequest request)
     {
-        var result = await _blogLikeService.GetAllByBasicAsync(request);
-
-        if (result == null) return NotFound();
-
-        return Ok(result);
+        var result = await _blogLikeService.GetBasicListAsync(request);
+        return FromResult(result);
     }
 
-    [HttpPost("GetListByBasic")]
-    public async Task<IActionResult> GetListByBasic(DynamicPaginationRequest request)
+    [HttpPost("list/detail")]
+    public async Task<IActionResult> GetDetailList(DynamicRequest? request)
     {
-        var result = await _blogLikeService.GetListByBasicAsync(request);
-
-        if (result == null) return NotFound();
-
-        return Ok(result);
-    }
-    #endregion
-
-    #region GetDetail
-    [HttpGet("GetByDetail")]
-    public async Task<IActionResult> GetByDetail(Guid BlogId, Guid UserId)
-    {
-        var result = await _blogLikeService.GetByDetailAsync(BlogId, UserId);
-
-        if (result == null) return NotFound();
-
-        return Ok(result);
-    }
-
-    [HttpPost("GetAllByDetail")]
-    public async Task<IActionResult> GetAllByDetail(DynamicRequest? request)
-    {
-        var result = await _blogLikeService.GetAllByDetailAsync(request);
-
-        if (result == null) return NotFound();
-
-        return Ok(result);
-    }
-
-    [HttpPost("GetListByDetail")]
-    public async Task<IActionResult> GetListByDetail(DynamicPaginationRequest request)
-    {
-        var result = await _blogLikeService.GetListByDetailAsync(request);
-
-        if (result == null) return NotFound();
-
-        return Ok(result);
+        var result = await _blogLikeService.GetDetailListAsync(request);
+        return FromResult(result);
     }
     #endregion
 
     #region Create
-    [HttpPost("Create")]
+    [HttpPost]
     public async Task<IActionResult> Create(BlogLikeCreateDto request)
     {
         var result = await _blogLikeService.CreateAsync(request);
+        return FromResult(result);
+    }
+    #endregion
 
-        return Ok(result);
+    #region Update
+    [HttpPut]
+    public async Task<IActionResult> Update(BlogLike request)
+    {
+        var result = await _blogLikeService.UpdateAsync(request);
+        return FromResult(result);
+    }
+    #endregion
+
+    #region Pagination
+    [HttpPost("pagination")]
+    public async Task<IActionResult> Pagination(DynamicPaginationRequest request)
+    {
+        var result = await _blogLikeService.PaginationAsync(request);
+        return FromResult(result);
     }
     #endregion
 
@@ -133,21 +98,19 @@ public class BlogLikeController : ControllerBase
     }
     #endregion
 
-    #region Datatable Methods
-    [HttpPost("DatatableClientSide")]
-    public async Task<IActionResult> DatatableClientSide(DynamicRequest request)
+    #region Datatable
+    [HttpPost("datatable/client")]
+    public async Task<IActionResult> DatatableClientSide(DynamicDatatableRequest request)
     {
         var result = await _blogLikeService.DatatableClientSideAsync(request);
-
-        return Ok(result);
+        return FromResult(result);
     }
 
-    [HttpPost("DatatableServerSide")]
-    public async Task<IActionResult> DatatableServerSide(DynamicDatatableServerSideRequest request)
+    [HttpPost("datatable/server")]
+    public async Task<IActionResult> DatatableServerSide(DynamicDatatableRequest request)
     {
         var result = await _blogLikeService.DatatableServerSideAsync(request);
-
-        return Ok(result);
+        return FromResult(result);
     }
     #endregion
 }

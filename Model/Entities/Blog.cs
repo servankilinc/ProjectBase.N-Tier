@@ -2,7 +2,7 @@
 
 namespace Model.Entities;
 
-public class Blog: IEntity, ISoftDeletableEntity, IAuditableEntity, ILoggableEntity, IArchivableEntity
+public class Blog: IEntity, ISoftDeletableEntity, IAuditableEntity, IArchivableEntity
 {
     public Guid Id { get; set; }
     public Guid AuthorId { get; set; }

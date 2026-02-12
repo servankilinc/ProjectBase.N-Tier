@@ -8,7 +8,7 @@ using WebUI.Utils.ActionFilters;
 
 namespace WebUI.Controllers;
 
-public class CategoryController : Controller
+public class CategoryController : BaseController
 {
     private readonly ICategoryService _categoryService;
     public CategoryController(ICategoryService categoryService)

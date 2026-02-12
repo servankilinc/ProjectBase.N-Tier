@@ -1,10 +1,15 @@
 ﻿using AutoMapper;
 using Model.Auth.SignUp;
-using Model.Dtos.Blog_;
-using Model.Dtos.BlogComment_;
-using Model.Dtos.BlogLike_;
-using Model.Dtos.Category_;
-using Model.Dtos.User_;
+using Model.Dtos.Blog.Commands;
+using Model.Dtos.Blog.Queries;
+using Model.Dtos.BlogComment.Commands;
+using Model.Dtos.BlogComment.Queries;
+using Model.Dtos.BlogLike.Commands;
+using Model.Dtos.BlogLike.Queries;
+using Model.Dtos.Category.Commands;
+using Model.Dtos.Category.Queries;
+using Model.Dtos.User.Commands;
+using Model.Dtos.User.Queries;
 using Model.Entities;
 
 namespace Business.Mappings;

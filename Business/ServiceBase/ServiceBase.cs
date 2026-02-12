@@ -1,167 +1,225 @@
 ﻿using AutoMapper;
+using Core.BaseRequestModels;
 using Core.Model;
 using Core.Utils.Datatable;
 using Core.Utils.DynamicQuery;
-using Core.Utils.ExceptionHandle.Exceptions;
 using Core.Utils.Pagination;
+using Core.Utils.ResultPattern;
+using Core.Utils.Validation;
 using DataAccess.Repository;
 using Microsoft.EntityFrameworkCore.Query;
 using System.Linq.Expressions;
 
 namespace Business.ServiceBase;
 
-public class ServiceBase<TEntity, TRepository> : IServiceBase<TEntity>, IServiceBaseAsync<TEntity>
+public abstract class ServiceBase<TEntity, TRepository>
     where TEntity : class, IEntity
     where TRepository : IRepository<TEntity>, IRepositoryAsync<TEntity>
 {
-    private readonly TRepository _repository;
-    private readonly IMapper _mapper;
-    public ServiceBase(TRepository repository, IMapper mapper)
+    protected readonly TRepository _repository;
+    protected readonly IValidationService _validationService;
+    protected readonly IMapper _mapper;
+    public ServiceBase(TRepository repository, IValidationService validationService, IMapper mapper)
     {
         _repository = repository;
+        _validationService = validationService;
         _mapper = mapper;
     }
 
 
     // ############################# Sync Methods #############################
     #region Add
-    public TEntity _Add(TEntity entity)
-    {
-        return _repository.AddAndSave(entity);
-    }
-
-    public TDtoResponse _Add<TDtoResponse>(TEntity entity) where TDtoResponse : IDto
+    protected virtual Result<TEntity> Add(TEntity entity)
     {
         TEntity insertedEntity = _repository.AddAndSave(entity);
-        return _mapper.Map<TDtoResponse>(insertedEntity);
+        return Result<TEntity>.Success(insertedEntity);
     }
 
-    public TEntity _Add<TDtoRequest>(TDtoRequest insertModel) where TDtoRequest : IDto
+    protected virtual Result<TDtoResponse> Add<TDtoResponse>(TEntity entity) where TDtoResponse : IDto
     {
-        TEntity mappedEntity = _mapper.Map<TEntity>(insertModel);
-        return _repository.AddAndSave(mappedEntity);
+        TEntity insertedEntity = _repository.AddAndSave(entity);
+        TDtoResponse responseModel = _mapper.Map<TDtoResponse>(insertedEntity);
+        return Result<TDtoResponse>.Success(responseModel);
     }
 
-    public TDtoResponse _Add<TDtoRequest, TDtoResponse>(TDtoRequest insertModel) where TDtoRequest : IDto where TDtoResponse : IDto
+    protected virtual Result<TEntity> Add<TDtoRequest>(TDtoRequest insertModel) where TDtoRequest : IDto
     {
-        TEntity mappedEntity = _mapper.Map<TEntity>(insertModel);
-        TEntity insertedEntity = _repository.AddAndSave(mappedEntity);
-        return _mapper.Map<TDtoResponse>(insertedEntity);
+        ValidatorResult validationResult = _validationService.Validate(insertModel);
+        if (!validationResult.IsValid)
+            return Result<TEntity>.Validation(validationResult.Failures, description: $"Validation failed for {nameof(TDtoRequest)}");
+
+        TEntity entityToInsert = _mapper.Map<TEntity>(insertModel);
+        TEntity insertedEntity = _repository.AddAndSave(entityToInsert);
+        return Result<TEntity>.Success(insertedEntity);
+    }
+
+    protected virtual Result<TDtoResponse> Add<TDtoRequest, TDtoResponse>(TDtoRequest insertModel) where TDtoRequest : IDto where TDtoResponse : IDto
+    {
+        ValidatorResult validationResult = _validationService.Validate(insertModel);
+        if (!validationResult.IsValid)
+            return Result<TDtoResponse>.Validation(validationResult.Failures, description: $"Validation failed for {nameof(TDtoRequest)}");
+
+        TEntity entityToInsert = _mapper.Map<TEntity>(insertModel);
+        TEntity insertedEntity = _repository.AddAndSave(entityToInsert);
+        TDtoResponse responseModel = _mapper.Map<TDtoResponse>(insertedEntity);
+        return Result<TDtoResponse>.Success(responseModel);
     }
     #endregion
 
     #region AddList
-    public List<TEntity> _AddList(IEnumerable<TEntity> entityList)
+    protected virtual Result<ICollection<TEntity>> AddList(IEnumerable<TEntity> entityList)
     {
-        return _repository.AddAndSave(entityList);
+        ICollection<TEntity> insertedEntityList = _repository.AddAndSave(entityList);
+        return Result<ICollection<TEntity>>.Success(insertedEntityList);
     }
 
-    public List<TDtoResponse> _AddList<TDtoResponse>(IEnumerable<TEntity> entityList) where TDtoResponse : IDto
+    protected virtual Result<ICollection<TDtoResponse>> AddList<TDtoResponse>(IEnumerable<TEntity> entityList) where TDtoResponse : IDto
     {
-        List<TEntity> insertedEntityList = _repository.AddAndSave(entityList);
-        return _mapper.Map<List<TDtoResponse>>(insertedEntityList);
+        ICollection<TEntity> insertedEntityList = _repository.AddAndSave(entityList);
+        ICollection<TDtoResponse> responseModelList = _mapper.Map<ICollection<TDtoResponse>>(insertedEntityList);
+        return Result<ICollection<TDtoResponse>>.Success(responseModelList);
     }
 
-    public List<TEntity> _AddList<TDtoRequest>(IEnumerable<TDtoRequest> insertModelList) where TDtoRequest : IDto
+    protected virtual Result<ICollection<TEntity>> AddList<TDtoRequest>(IEnumerable<TDtoRequest> insertModelList) where TDtoRequest : IDto
     {
+        ValidatorResult validationResult = _validationService.Validate(insertModelList);
+        if (!validationResult.IsValid)
+            return Result<ICollection<TEntity>>.Validation(validationResult.Failures, description: $"Validations failed for {nameof(TDtoRequest)}");
+
         IEnumerable<TEntity> mappedEntityList = _mapper.Map<IEnumerable<TEntity>>(insertModelList);
-        return _repository.AddAndSave(mappedEntityList);
+        ICollection<TEntity> insertedEntityList = _repository.AddAndSave(mappedEntityList);
+        return Result<ICollection<TEntity>>.Success(insertedEntityList);
     }
 
-    public List<TDtoResponse> _AddList<TDtoRequest, TDtoResponse>(IEnumerable<TDtoRequest> insertModelList) where TDtoRequest : IDto where TDtoResponse : IDto
+    protected virtual Result<ICollection<TDtoResponse>> AddList<TDtoRequest, TDtoResponse>(IEnumerable<TDtoRequest> insertModelList) where TDtoRequest : IDto where TDtoResponse : IDto
     {
-        IEnumerable<TEntity> mappedEntityList = _mapper.Map<IEnumerable<TEntity>>(insertModelList);
-        List<TEntity> insertedEntityList = _repository.AddAndSave(mappedEntityList);
-        return _mapper.Map<List<TDtoResponse>>(insertedEntityList);
+        ValidatorResult validationResult = _validationService.Validate(insertModelList);
+        if (!validationResult.IsValid)
+            return Result<ICollection<TDtoResponse>>.Validation(validationResult.Failures, description: $"Validations failed for {nameof(TDtoRequest)}");
+
+        IEnumerable<TEntity> entityListToInsert = _mapper.Map<IEnumerable<TEntity>>(insertModelList);
+        ICollection<TEntity> insertedEntityList = _repository.AddAndSave(entityListToInsert);
+        ICollection<TDtoResponse> responseModelList = _mapper.Map<ICollection<TDtoResponse>>(insertedEntityList);
+        return Result<ICollection<TDtoResponse>>.Success(responseModelList);
     }
     #endregion
 
     #region Update
-    public TEntity _Update(TEntity entity, Expression<Func<TEntity, bool>> where)
+    protected virtual Result<TEntity> Update(TEntity entity)
     {
-        TEntity? originalEntity = _repository.Get(where: where);
-        if (originalEntity == null) throw new GeneralException($"The entity({nameof(TEntity)}) was not found to update.");
-
-        _mapper.Map(entity, originalEntity);
-
-        return _repository.UpdateAndSave(originalEntity);
+        TEntity updatedEntity = _repository.UpdateAndSave(entity);
+        return Result<TEntity>.Success(updatedEntity);
     }
 
-    public TDtoResponse _Update<TDtoResponse>(TEntity entity, Expression<Func<TEntity, bool>> where) where TDtoResponse : IDto
+    protected virtual Result<TDtoResponse> Update<TDtoResponse>(TEntity entity) where TDtoResponse : IDto
     {
-        TEntity? originalEntity = _repository.Get(where: where);
-        if (originalEntity == null) throw new GeneralException($"The entity({nameof(TEntity)}) was not found to update.");
-
-        _mapper.Map(entity, originalEntity);
-
-        TEntity updatedEntity = _repository.UpdateAndSave(originalEntity);
-        return _mapper.Map<TDtoResponse>(updatedEntity);
+        TEntity updatedEntity = _repository.UpdateAndSave(entity);
+        TDtoResponse responseModel = _mapper.Map<TDtoResponse>(updatedEntity);
+        return Result<TDtoResponse>.Success(responseModel);
     }
 
-    public TEntity _Update<TDtoRequest>(TDtoRequest updateModel, Expression<Func<TEntity, bool>> where) where TDtoRequest : IDto
+    protected virtual Result<TEntity> Update<TDtoRequest>(TDtoRequest updateModel, Expression<Func<TEntity, bool>> where) where TDtoRequest : IDto
     {
+        ValidatorResult validationResult = _validationService.Validate(updateModel);
+        if (!validationResult.IsValid)
+            return Result<TEntity>.Validation(validationResult.Failures, description: $"Validation failed for {nameof(TDtoRequest)}");
+
         TEntity? entity = _repository.Get(where: where);
-        if (entity == null) throw new GeneralException($"The entity({nameof(TEntity)}) was not found to update.");
-
-        TEntity entityToUpdate = _mapper.Map(updateModel, entity);
-        return _repository.UpdateAndSave(entityToUpdate);
-    }
-
-    public TDtoResponse _Update<TDtoRequest, TDtoResponse>(TDtoRequest updateModel, Expression<Func<TEntity, bool>> where) where TDtoRequest : IDto where TDtoResponse : IDto
-    {
-        TEntity? entity = _repository.Get(where: where);
-        if (entity == null) throw new GeneralException($"The entity({nameof(TEntity)}) was not found to update.");
+        if (entity == null)
+            return Result<TEntity>.NotFound(description: $"The entity({nameof(TEntity)}) was not found to update.");
 
         TEntity entityToUpdate = _mapper.Map(updateModel, entity);
         TEntity updatedEntity = _repository.UpdateAndSave(entityToUpdate);
-        return _mapper.Map<TDtoResponse>(updatedEntity);
+        return Result<TEntity>.Success(updatedEntity);
+    }
+
+    protected virtual Result<TDtoResponse> Update<TDtoRequest, TDtoResponse>(TDtoRequest updateModel, Expression<Func<TEntity, bool>> where) where TDtoRequest : IDto where TDtoResponse : IDto
+    {
+        ValidatorResult validationResult = _validationService.Validate(updateModel);
+        if (!validationResult.IsValid)
+            return Result<TDtoResponse>.Validation(validationResult.Failures, description: $"Validation failed for {nameof(TDtoRequest)}");
+
+        TEntity? entity = _repository.Get(where: where);
+        if (entity == null)
+            return Result<TDtoResponse>.NotFound(description: $"The entity({nameof(TEntity)}) was not found to update.");
+
+        TEntity entityToUpdate = _mapper.Map(updateModel, entity);
+        TEntity updatedEntity = _repository.UpdateAndSave(entityToUpdate);
+        TDtoResponse responseModel = _mapper.Map<TDtoResponse>(updatedEntity);
+        return Result<TDtoResponse>.Success(responseModel);
     }
     #endregion
 
     #region UpdateList
-    public List<TEntity> _UpdateList(IEnumerable<TEntity> entityList)
+    protected virtual Result<ICollection<TEntity>> UpdateList(IEnumerable<TEntity> entityList)
     {
-        return _repository.UpdateAndSave(entityList);
+        ICollection<TEntity> updatedEntityList = _repository.UpdateAndSave(entityList);
+        return Result<ICollection<TEntity>>.Success(updatedEntityList);
     }
 
-    public List<TDtoResponse> _UpdateList<TDtoResponse>(IEnumerable<TEntity> entityList) where TDtoResponse : IDto
+    protected virtual Result<ICollection<TDtoResponse>> UpdateList<TDtoResponse>(IEnumerable<TEntity> entityList) where TDtoResponse : IDto
     {
-        List<TEntity> updatedList = _repository.UpdateAndSave(entityList);
-        return _mapper.Map<List<TDtoResponse>>(updatedList);
+        ICollection<TEntity> updatedEntityList = _repository.UpdateAndSave(entityList);
+        ICollection<TDtoResponse> responseModelList = _mapper.Map<ICollection<TDtoResponse>>(updatedEntityList);
+        return Result<ICollection<TDtoResponse>>.Success(responseModelList);
     }
     #endregion
 
     #region Delete
-    public void _Delete(TEntity entity)
+    protected virtual Result Delete(TEntity entity)
     {
         _repository.DeleteAndSave(entity);
+        return Result.Success();
     }
 
-    public void _Delete(IEnumerable<TEntity> entityList)
+    protected virtual Result Delete(IEnumerable<TEntity> entityList)
     {
         _repository.DeleteAndSave(entityList);
+        return Result.Success();
     }
 
-    public void _Delete(Expression<Func<TEntity, bool>> where)
+    protected virtual Result Delete(Expression<Func<TEntity, bool>> where)
     {
         _repository.DeleteAndSave(where);
+        return Result.Success();
+    }
+
+    protected virtual Result UndoDelete(Expression<Func<TEntity, bool>> where)
+    {
+        TEntity? originalEntity = _repository.Get(where: where, ignoreFilters: true);
+
+        if (originalEntity == null)
+            return Result.NotFound(description: $"The entity({nameof(TEntity)}) was not found to undo deletion.");
+
+        if (originalEntity is not ISoftDeletableEntity softEntity)
+            return Result.Failure(description: "The entity must implement ISoftDeletableEntity for undo deletion.");
+
+        softEntity.IsDeleted = false;
+        softEntity.DeletedBy = null;
+        softEntity.DeletedDateUtc = null;
+
+        _repository.UpdateAndSave(originalEntity);
+
+        return Result.Success();
     }
     #endregion
 
     #region IsExist & Count
-    public bool _IsExist(Filter? filter = null, Expression<Func<TEntity, bool>>? where = null, bool ignoreFilters = false)
+    protected virtual Result<bool> IsExist(Filter? filter = null, Expression<Func<TEntity, bool>>? where = null, bool ignoreFilters = false)
     {
-        return _repository.IsExist(filter, where, ignoreFilters);
+        bool isExist = _repository.IsExist(filter, where, ignoreFilters);
+        return Result<bool>.Success(isExist);
     }
 
-    public int _Count(Filter? filter = null, Expression<Func<TEntity, bool>>? where = null, bool ignoreFilters = false)
+    protected virtual Result<int> Count(Filter? filter = null, Expression<Func<TEntity, bool>>? where = null, bool ignoreFilters = false)
     {
-        return _repository.Count(filter, where, ignoreFilters);
+        int count = _repository.Count(filter, where, ignoreFilters);
+        return Result<int>.Success(count);
     }
     #endregion
 
     #region Get
-    public TEntity? _Get(
+    protected virtual Result<TEntity> Get(
         Filter? filter = null,
         IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
@@ -177,20 +235,23 @@ public class ServiceBase<TEntity, TRepository> : IServiceBase<TEntity>, IService
             orderBy: orderBy,
             include: include,
             ignoreFilters: ignoreFilters,
-            tracking: tracking);
+            tracking: tracking
+        );
 
-        return entity;
+        if (entity == null)
+            return Result<TEntity>.NotFound(description: $"The entity({nameof(TEntity)}) was not found.");
+
+        return Result<TEntity>.Success(entity);
     }
 
-    public TDtoResponse? _Get<TDtoResponse>(
+    protected virtual Result<TDtoResponse> Get<TDtoResponse>(
         Expression<Func<TEntity, TDtoResponse>> select,
         Filter? filter = null,
         IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-        bool ignoreFilters = false,
-        bool tracking = false) where TDtoResponse : IDto
+        bool ignoreFilters = false) where TDtoResponse : IDto
     {
         TDtoResponse? responseModel = _repository.Get(
             select: select,
@@ -199,21 +260,23 @@ public class ServiceBase<TEntity, TRepository> : IServiceBase<TEntity>, IService
             where: where,
             orderBy: orderBy,
             include: include,
-            ignoreFilters: ignoreFilters,
-            tracking: tracking);
+            ignoreFilters: ignoreFilters
+        );
 
-        return responseModel;
+        if (responseModel == null)
+            return Result<TDtoResponse>.NotFound(description: $"The entity({nameof(TEntity)}) was not found.");
+
+        return Result<TDtoResponse>.Success(responseModel);
     }
 
-    public object? _Get(
+    protected virtual Result<object> Get(
         Expression<Func<TEntity, object>> select,
         Filter? filter = null,
         IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-        bool ignoreFilters = false,
-        bool tracking = false)
+        bool ignoreFilters = false)
     {
         object? responseModel = _repository.Get(
             select: select,
@@ -222,20 +285,22 @@ public class ServiceBase<TEntity, TRepository> : IServiceBase<TEntity>, IService
             where: where,
             orderBy: orderBy,
             include: include,
-            ignoreFilters: ignoreFilters,
-            tracking: tracking);
+            ignoreFilters: ignoreFilters
+        );
 
-        return responseModel;
+        if (responseModel == null)
+            return Result<object>.NotFound(description: $"The entity({nameof(TEntity)}) was not found.");
+
+        return Result<object>.Success(responseModel);
     }
 
-    public TDtoResponse? _Get<TDtoResponse>(
+    protected virtual Result<TDtoResponse> Get<TDtoResponse>(
         Filter? filter = null,
         IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-        bool ignoreFilters = false,
-        bool tracking = false) where TDtoResponse : IDto
+        bool ignoreFilters = false) where TDtoResponse : IDto
     {
         TDtoResponse? responseModel = _repository.Get<TDtoResponse>(
             configurationProvider: _mapper.ConfigurationProvider,
@@ -244,15 +309,18 @@ public class ServiceBase<TEntity, TRepository> : IServiceBase<TEntity>, IService
             where: where,
             orderBy: orderBy,
             include: include,
-            ignoreFilters: ignoreFilters,
-            tracking: tracking);
+            ignoreFilters: ignoreFilters
+        );
 
-        return responseModel;
+        if (responseModel == null)
+            return Result<TDtoResponse>.NotFound(description: $"The entity({nameof(TEntity)}) was not found.");
+
+        return Result<TDtoResponse>.Success(responseModel);
     }
     #endregion
 
     #region GetList
-    public ICollection<TEntity>? _GetList(
+    protected virtual Result<ICollection<TEntity>> GetList(
         Filter? filter = null,
         IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
@@ -261,109 +329,23 @@ public class ServiceBase<TEntity, TRepository> : IServiceBase<TEntity>, IService
         bool ignoreFilters = false,
         bool tracking = true)
     {
-        ICollection<TEntity>? entity = _repository.GetAll(
+        ICollection<TEntity>? entities = _repository.GetAll(
             filter: filter,
             sorts: sorts,
             where: where,
             orderBy: orderBy,
             include: include,
             ignoreFilters: ignoreFilters,
-            tracking: tracking);
+            tracking: tracking
+        );
 
-        return entity;
+        if (entities == null)
+            return Result<ICollection<TEntity>>.NotFound(description: $"The entities({nameof(TEntity)}) was not found.");
+
+        return Result<ICollection<TEntity>>.Success(entities);
     }
 
-    public ICollection<TDtoResponse>? _GetList<TDtoResponse>(
-       Expression<Func<TEntity, TDtoResponse>> select,
-       Filter? filter = null,
-       IEnumerable<Sort>? sorts = null,
-       Expression<Func<TEntity, bool>>? where = null,
-       Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-       Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-       bool ignoreFilters = false,
-       bool tracking = false) where TDtoResponse : IDto
-    {
-        ICollection<TDtoResponse>? responseModel = _repository.GetAll(
-            select: select,
-            filter: filter,
-            sorts: sorts,
-            where: where,
-            orderBy: orderBy,
-            include: include,
-            ignoreFilters: ignoreFilters,
-            tracking: tracking);
-
-        return responseModel;
-    }
-
-    public ICollection<object>? _GetList(
-       Expression<Func<TEntity, object>> select,
-       Filter? filter = null,
-       IEnumerable<Sort>? sorts = null,
-       Expression<Func<TEntity, bool>>? where = null,
-       Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-       Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-       bool ignoreFilters = false,
-       bool tracking = false)
-    {
-        ICollection<object>? responseModel = _repository.GetAll(
-            select: select,
-            filter: filter,
-            sorts: sorts,
-            where: where,
-            orderBy: orderBy,
-            include: include,
-            ignoreFilters: ignoreFilters,
-            tracking: tracking);
-
-        return responseModel;
-    }
-
-    public ICollection<TDtoResponse>? _GetList<TDtoResponse>(
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
-        Expression<Func<TEntity, bool>>? where = null,
-        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-        bool ignoreFilters = false,
-        bool tracking = false) where TDtoResponse : IDto
-    {
-        ICollection<TDtoResponse>? responseModel = _repository.GetAll<TDtoResponse>(
-            configurationProvider: _mapper.ConfigurationProvider,
-            filter: filter,
-            sorts: sorts,
-            where: where,
-            orderBy: orderBy,
-            include: include,
-            ignoreFilters: ignoreFilters,
-            tracking: tracking);
-
-        return responseModel;
-    }
-    #endregion
-
-    #region Datatable Server-Side
-    public DatatableResponseServerSide<TEntity> _DatatableServerSide(
-        DatatableRequest datatableRequest,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
-        Expression<Func<TEntity, bool>>? where = null,
-        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
-        bool ignoreFilters = false)
-    {
-        return _repository.DatatableServerSide(
-            datatableRequest: datatableRequest,
-            filter: filter,
-            sorts: sorts,
-            where: where,
-            orderBy: orderBy,
-            include: include,
-            ignoreFilters: ignoreFilters);
-    }
-
-    public DatatableResponseServerSide<TDtoResponse> _DatatableServerSide<TDtoResponse>(
-       DatatableRequest datatableRequest,
+    protected virtual Result<ICollection<TDtoResponse>> GetList<TDtoResponse>(
        Expression<Func<TEntity, TDtoResponse>> select,
        Filter? filter = null,
        IEnumerable<Sort>? sorts = null,
@@ -372,19 +354,48 @@ public class ServiceBase<TEntity, TRepository> : IServiceBase<TEntity>, IService
        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
        bool ignoreFilters = false) where TDtoResponse : IDto
     {
-        return _repository.DatatableServerSide<TDtoResponse>(
-            datatableRequest: datatableRequest,
+        ICollection<TDtoResponse>? responseModel = _repository.GetAll(
             select: select,
             filter: filter,
             sorts: sorts,
             where: where,
             orderBy: orderBy,
             include: include,
-            ignoreFilters: ignoreFilters);
+            ignoreFilters: ignoreFilters
+        );
+
+        if (responseModel == null)
+            return Result<ICollection<TDtoResponse>>.NotFound(description: $"The entities({nameof(TEntity)}) was not found.");
+
+        return Result<ICollection<TDtoResponse>>.Success(responseModel);
     }
 
-    public DatatableResponseServerSide<TDtoResponse> _DatatableServerSide<TDtoResponse>(
-        DatatableRequest datatableRequest,
+    protected virtual Result<ICollection<object>> GetList(
+       Expression<Func<TEntity, object>> select,
+       Filter? filter = null,
+       IEnumerable<Sort>? sorts = null,
+       Expression<Func<TEntity, bool>>? where = null,
+       Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+       Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
+       bool ignoreFilters = false)
+    {
+        ICollection<object>? responseModel = _repository.GetAll(
+            select: select,
+            filter: filter,
+            sorts: sorts,
+            where: where,
+            orderBy: orderBy,
+            include: include,
+            ignoreFilters: ignoreFilters
+        );
+
+        if (responseModel == null)
+            return Result<ICollection<object>>.NotFound(description: $"The entities({nameof(TEntity)}) was not found.");
+
+        return Result<ICollection<object>>.Success(responseModel);
+    }
+
+    protected virtual Result<ICollection<TDtoResponse>> GetList<TDtoResponse>(
         Filter? filter = null,
         IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
@@ -392,275 +403,393 @@ public class ServiceBase<TEntity, TRepository> : IServiceBase<TEntity>, IService
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false) where TDtoResponse : IDto
     {
-        return _repository.DatatableServerSide<TDtoResponse>(
-            datatableRequest: datatableRequest,
+        ICollection<TDtoResponse>? responseModel = _repository.GetAll<TDtoResponse>(
             configurationProvider: _mapper.ConfigurationProvider,
             filter: filter,
             sorts: sorts,
             where: where,
             orderBy: orderBy,
             include: include,
-            ignoreFilters: ignoreFilters);
+            ignoreFilters: ignoreFilters
+        );
+
+        if (responseModel == null)
+            return Result<ICollection<TDtoResponse>>.NotFound(description: $"The entities({nameof(TEntity)}) was not found.");
+
+        return Result<ICollection<TDtoResponse>>.Success(responseModel);
+    }
+    #endregion
+
+    #region Datatable Server-Side
+    protected virtual Result<DatatableResponseServerSide<TEntity>> DatatableServerSide(
+        DynamicDatatableRequest datatableRequest,
+        Expression<Func<TEntity, bool>>? where = null,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
+        bool ignoreFilters = false)
+    {
+        DatatableResponseServerSide<TEntity> data = _repository.DatatableServerSide(
+            datatableRequest: datatableRequest,
+            where: where,
+            orderBy: orderBy,
+            include: include,
+            ignoreFilters: ignoreFilters
+        );
+
+        return Result<DatatableResponseServerSide<TEntity>>.Success(data);
+    }
+
+    protected virtual Result<DatatableResponseServerSide<TDtoResponse>> DatatableServerSide<TDtoResponse>(
+       DynamicDatatableRequest datatableRequest,
+       Expression<Func<TEntity, TDtoResponse>> select,
+       Expression<Func<TEntity, bool>>? where = null,
+       Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+       Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
+       bool ignoreFilters = false) where TDtoResponse : IDto
+    {
+        DatatableResponseServerSide<TDtoResponse> data = _repository.DatatableServerSide(
+            datatableRequest: datatableRequest,
+            select: select,
+            where: where,
+            orderBy: orderBy,
+            include: include,
+            ignoreFilters: ignoreFilters
+        );
+
+        return Result<DatatableResponseServerSide<TDtoResponse>>.Success(data);
+    }
+
+    protected virtual Result<DatatableResponseServerSide<TDtoResponse>> DatatableServerSide<TDtoResponse>(
+        DynamicDatatableRequest datatableRequest,
+        Expression<Func<TEntity, bool>>? where = null,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
+        bool ignoreFilters = false) where TDtoResponse : IDto
+    {
+        DatatableResponseServerSide<TDtoResponse> data = _repository.DatatableServerSide<TDtoResponse>(
+            datatableRequest: datatableRequest,
+            configurationProvider: _mapper.ConfigurationProvider,
+            where: where,
+            orderBy: orderBy,
+            include: include,
+            ignoreFilters: ignoreFilters
+        );
+
+        return Result<DatatableResponseServerSide<TDtoResponse>>.Success(data);
     }
     #endregion
 
     #region Datatable Client-Side
-    public DatatableResponseClientSide<TEntity> _DatatableClientSide(
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+    protected virtual Result<DatatableResponseClientSide<TEntity>> DatatableClientSide(
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false)
     {
-        return _repository.DatatableClientSide(
-            filter: filter,
-            sorts: sorts,
+        DatatableResponseClientSide<TEntity> data = _repository.DatatableClientSide(
+            datatableRequest: datatableRequest,
             where: where,
             orderBy: orderBy,
             include: include,
-            ignoreFilters: ignoreFilters);
+            ignoreFilters: ignoreFilters
+        );
+
+        return Result<DatatableResponseClientSide<TEntity>>.Success(data);
     }
 
-    public DatatableResponseClientSide<TDtoResponse> _DatatableClientSide<TDtoResponse>(
+    protected virtual Result<DatatableResponseClientSide<TDtoResponse>> DatatableClientSide<TDtoResponse>(
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, TDtoResponse>> select,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false) where TDtoResponse : IDto
     {
-        return _repository.DatatableClientSide<TDtoResponse>(
+        DatatableResponseClientSide<TDtoResponse> data = _repository.DatatableClientSide(
+            datatableRequest: datatableRequest,
             select: select,
-            filter: filter,
-            sorts: sorts,
             where: where,
             orderBy: orderBy,
             include: include,
-            ignoreFilters: ignoreFilters);
+            ignoreFilters: ignoreFilters
+        );
+
+        return Result<DatatableResponseClientSide<TDtoResponse>>.Success(data);
     }
 
-    public DatatableResponseClientSide<TDtoResponse> _DatatableClientSide<TDtoResponse>(
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+    protected virtual Result<DatatableResponseClientSide<TDtoResponse>> DatatableClientSide<TDtoResponse>(
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false) where TDtoResponse : IDto
     {
-        return _repository.DatatableClientSide<TDtoResponse>(
+        DatatableResponseClientSide<TDtoResponse> data = _repository.DatatableClientSide<TDtoResponse>(
+            datatableRequest: datatableRequest,
             configurationProvider: _mapper.ConfigurationProvider,
-            filter: filter,
-            sorts: sorts,
             where: where,
             orderBy: orderBy,
             include: include,
-            ignoreFilters: ignoreFilters);
+            ignoreFilters: ignoreFilters
+        );
+
+        return Result<DatatableResponseClientSide<TDtoResponse>>.Success(data);
     }
     #endregion
 
     #region Pagination
-    public PaginationResponse<TEntity> _Pagination(
-        PaginationRequest paginationRequest,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+    protected virtual Result<PaginationResponse<TEntity>> Pagination(
+        DynamicPaginationRequest paginationRequest,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false)
     {
-        return _repository.Pagination(
+        PaginationResponse<TEntity> data = _repository.Pagination(
             paginationRequest: paginationRequest,
-            filter: filter,
-            sorts: sorts,
             where: where,
             orderBy: orderBy,
             include: include,
-            ignoreFilters: ignoreFilters);
+            ignoreFilters: ignoreFilters
+        );
+
+        return Result<PaginationResponse<TEntity>>.Success(data);
     }
 
-    public PaginationResponse<TDtoResponse> _Pagination<TDtoResponse>(
-        PaginationRequest paginationRequest,
+    protected virtual Result<PaginationResponse<TDtoResponse>> Pagination<TDtoResponse>(
+        DynamicPaginationRequest paginationRequest,
         Expression<Func<TEntity, TDtoResponse>> select,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false) where TDtoResponse : IDto
     {
-        return _repository.Pagination<TDtoResponse>(
+        PaginationResponse<TDtoResponse> data = _repository.Pagination(
             paginationRequest: paginationRequest,
             select: select,
-            filter: filter,
-            sorts: sorts,
             where: where,
             orderBy: orderBy,
             include: include,
-            ignoreFilters: ignoreFilters);
+            ignoreFilters: ignoreFilters
+        );
+
+        return Result<PaginationResponse<TDtoResponse>>.Success(data);
     }
 
-    public PaginationResponse<TDtoResponse> _Pagination<TDtoResponse>(
-        PaginationRequest paginationRequest,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+    protected virtual Result<PaginationResponse<TDtoResponse>> Pagination<TDtoResponse>(
+        DynamicPaginationRequest paginationRequest,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false) where TDtoResponse : IDto
     {
-        return _repository.Pagination<TDtoResponse>(
+        PaginationResponse<TDtoResponse> data = _repository.Pagination<TDtoResponse>(
             paginationRequest: paginationRequest,
             configurationProvider: _mapper.ConfigurationProvider,
-            filter: filter,
-            sorts: sorts,
             where: where,
             orderBy: orderBy,
             include: include,
-            ignoreFilters: ignoreFilters);
+            ignoreFilters: ignoreFilters
+        );
+
+        return Result<PaginationResponse<TDtoResponse>>.Success(data);
     }
     #endregion
 
     // ############################# Async Methods #############################
     #region Add
-    public async Task<TEntity> _AddAsync(TEntity entity, CancellationToken cancellationToken = default)
-    {
-        return await _repository.AddAndSaveAsync(entity, cancellationToken);
-    }
-
-    public async Task<TDtoResponse> _AddAsync<TDtoResponse>(TEntity entity, CancellationToken cancellationToken = default) where TDtoResponse : IDto
+    protected virtual async Task<Result<TEntity>> CreateAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         TEntity insertedEntity = await _repository.AddAndSaveAsync(entity, cancellationToken);
-        return _mapper.Map<TDtoResponse>(insertedEntity);
+        return Result<TEntity>.Success(insertedEntity);
     }
 
-    public async Task<TEntity> _AddAsync<TDtoRequest>(TDtoRequest insertModel, CancellationToken cancellationToken = default) where TDtoRequest : IDto
+    protected virtual async Task<Result<TDtoResponse>> CreateAsync<TDtoResponse>(TEntity entity, CancellationToken cancellationToken = default) where TDtoResponse : IDto
     {
-        TEntity mappedEntity = _mapper.Map<TEntity>(insertModel);
-        return await _repository.AddAndSaveAsync(mappedEntity, cancellationToken);
+        TEntity insertedEntity = await _repository.AddAndSaveAsync(entity, cancellationToken);
+        TDtoResponse responseModel = _mapper.Map<TDtoResponse>(insertedEntity);
+        return Result<TDtoResponse>.Success(responseModel);
     }
 
-    public async Task<TDtoResponse> _AddAsync<TDtoRequest, TDtoResponse>(TDtoRequest insertModel, CancellationToken cancellationToken = default) where TDtoRequest : IDto where TDtoResponse : IDto
+    protected virtual async Task<Result<TEntity>> CreateAsync<TDtoRequest>(TDtoRequest insertModel, CancellationToken cancellationToken = default) where TDtoRequest : IDto
     {
-        TEntity mappedEntity = _mapper.Map<TEntity>(insertModel);
-        TEntity insertedEntity = await _repository.AddAndSaveAsync(mappedEntity, cancellationToken);
-        return _mapper.Map<TDtoResponse>(insertedEntity);
+        ValidatorResult validationResult = await _validationService.ValidateAsync(insertModel, cancellationToken);
+        if (!validationResult.IsValid)
+            return Result<TEntity>.Validation(validationResult.Failures, description: $"Validation failed for {nameof(TDtoRequest)}");
+
+        TEntity entityToInsert = _mapper.Map<TEntity>(insertModel);
+        TEntity insertedEntity = await _repository.AddAndSaveAsync(entityToInsert, cancellationToken);
+        return Result<TEntity>.Success(insertedEntity);
+    }
+
+    protected virtual async Task<Result<TDtoResponse>> CreateAsync<TDtoRequest, TDtoResponse>(TDtoRequest insertModel, CancellationToken cancellationToken = default) where TDtoRequest : IDto where TDtoResponse : IDto
+    {
+        ValidatorResult validationResult = await _validationService.ValidateAsync(insertModel, cancellationToken);
+        if (!validationResult.IsValid)
+            return Result<TDtoResponse>.Validation(validationResult.Failures, description: $"Validation failed for {nameof(TDtoRequest)}");
+
+        TEntity entityToInsert = _mapper.Map<TEntity>(insertModel);
+        TEntity insertedEntity = await _repository.AddAndSaveAsync(entityToInsert, cancellationToken);
+        TDtoResponse responseModel = _mapper.Map<TDtoResponse>(insertedEntity);
+        return Result<TDtoResponse>.Success(responseModel);
     }
     #endregion
 
     #region AddList
-    public async Task<List<TEntity>> _AddListAsync(IEnumerable<TEntity> entityList, CancellationToken cancellationToken = default)
+    protected virtual async Task<Result<ICollection<TEntity>>> AddListAsync(IEnumerable<TEntity> entityList, CancellationToken cancellationToken = default)
     {
-        return await _repository.AddAndSaveAsync(entityList, cancellationToken);
+        ICollection<TEntity> insertedEntityList = await _repository.AddAndSaveAsync(entityList, cancellationToken);
+        return Result<ICollection<TEntity>>.Success(insertedEntityList);
     }
 
-    public async Task<List<TDtoResponse>> _AddListAsync<TDtoResponse>(IEnumerable<TEntity> entityList, CancellationToken cancellationToken = default) where TDtoResponse : IDto
+    protected virtual async Task<Result<ICollection<TDtoResponse>>> AddListAsync<TDtoResponse>(IEnumerable<TEntity> entityList, CancellationToken cancellationToken = default) where TDtoResponse : IDto
     {
-        List<TEntity> insertedEntityList = await _repository.AddAndSaveAsync(entityList, cancellationToken);
-        return _mapper.Map<List<TDtoResponse>>(insertedEntityList);
+        ICollection<TEntity> insertedEntityList = await _repository.AddAndSaveAsync(entityList, cancellationToken);
+        ICollection<TDtoResponse> responseModelList = _mapper.Map<ICollection<TDtoResponse>>(insertedEntityList);
+        return Result<ICollection<TDtoResponse>>.Success(responseModelList);
     }
 
-    public async Task<List<TEntity>> _AddListAsync<TDtoRequest>(IEnumerable<TDtoRequest> insertModelList, CancellationToken cancellationToken = default) where TDtoRequest : IDto
+    protected virtual async Task<Result<ICollection<TEntity>>> AddListAsync<TDtoRequest>(IEnumerable<TDtoRequest> insertModelList, CancellationToken cancellationToken = default) where TDtoRequest : IDto
     {
+        ValidatorResult validationResult = await _validationService.ValidateAsync(insertModelList, cancellationToken);
+        if (!validationResult.IsValid)
+            return Result<ICollection<TEntity>>.Validation(validationResult.Failures, description: $"Validations failed for {nameof(TDtoRequest)}");
+
         IEnumerable<TEntity> mappedEntityList = _mapper.Map<IEnumerable<TEntity>>(insertModelList);
-        return await _repository.AddAndSaveAsync(mappedEntityList, cancellationToken);
+        ICollection<TEntity> insertedEntityList = await _repository.AddAndSaveAsync(mappedEntityList, cancellationToken);
+        return Result<ICollection<TEntity>>.Success(insertedEntityList);
     }
 
-    public async Task<List<TDtoResponse>> _AddListAsync<TDtoRequest, TDtoResponse>(IEnumerable<TDtoRequest> insertModelList, CancellationToken cancellationToken = default) where TDtoRequest : IDto where TDtoResponse : IDto
+    protected virtual async Task<Result<ICollection<TDtoResponse>>> AddListAsync<TDtoRequest, TDtoResponse>(IEnumerable<TDtoRequest> insertModelList, CancellationToken cancellationToken = default) where TDtoRequest : IDto where TDtoResponse : IDto
     {
-        IEnumerable<TEntity> mappedEntityList = _mapper.Map<IEnumerable<TEntity>>(insertModelList);
-        List<TEntity> insertedEntityList = await _repository.AddAndSaveAsync(mappedEntityList, cancellationToken);
-        return _mapper.Map<List<TDtoResponse>>(insertedEntityList);
+        ValidatorResult validationResult = await _validationService.ValidateAsync(insertModelList, cancellationToken);
+        if (!validationResult.IsValid)
+            return Result<ICollection<TDtoResponse>>.Validation(validationResult.Failures, description: $"Validations failed for {nameof(TDtoRequest)}");
+
+        IEnumerable<TEntity> entityListToInsert = _mapper.Map<IEnumerable<TEntity>>(insertModelList);
+        ICollection<TEntity> insertedEntityList = await _repository.AddAndSaveAsync(entityListToInsert, cancellationToken);
+        ICollection<TDtoResponse> responseModelList = _mapper.Map<ICollection<TDtoResponse>>(insertedEntityList);
+        return Result<ICollection<TDtoResponse>>.Success(responseModelList);
     }
     #endregion
 
     #region Update
-    public async Task<TEntity> _UpdateAsync(TEntity entity, Expression<Func<TEntity, bool>> where, CancellationToken cancellationToken = default)
+    protected virtual async Task<Result<TEntity>> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
-        TEntity? originalEntity = await _repository.GetAsync(where: where, cancellationToken: cancellationToken);
-        if (originalEntity == null) throw new GeneralException($"The entity({nameof(TEntity)}) was not found to update.");
-
-        _mapper.Map(entity, originalEntity);
-
-        return await _repository.UpdateAndSaveAsync(originalEntity, cancellationToken);
+        TEntity updatedEntity = await _repository.UpdateAndSaveAsync(entity, cancellationToken);
+        return Result<TEntity>.Success(updatedEntity);
     }
 
-    public async Task<TDtoResponse> _UpdateAsync<TDtoResponse>(TEntity entity, Expression<Func<TEntity, bool>> where, CancellationToken cancellationToken = default) where TDtoResponse : IDto
+    protected virtual async Task<Result<TDtoResponse>> UpdateAsync<TDtoResponse>(TEntity entity, CancellationToken cancellationToken = default) where TDtoResponse : IDto
     {
-        TEntity? originalEntity = await _repository.GetAsync(where: where, cancellationToken: cancellationToken);
-        if (originalEntity == null) throw new GeneralException($"The entity({nameof(TEntity)}) was not found to update.");
-
-        _mapper.Map(entity, originalEntity);
-
-        TEntity updatedEntity = await _repository.UpdateAndSaveAsync(originalEntity, cancellationToken);
-        return _mapper.Map<TDtoResponse>(updatedEntity);
+        TEntity updatedEntity = await _repository.UpdateAndSaveAsync(entity, cancellationToken);
+        TDtoResponse responseModel = _mapper.Map<TDtoResponse>(updatedEntity);
+        return Result<TDtoResponse>.Success(responseModel);
     }
 
-    public async Task<TEntity> _UpdateAsync<TDtoRequest>(TDtoRequest updateModel, Expression<Func<TEntity, bool>> where, CancellationToken cancellationToken = default) where TDtoRequest : IDto
+    protected virtual async Task<Result<TEntity>> UpdateAsync<TDtoRequest>(TDtoRequest updateModel, Expression<Func<TEntity, bool>> where, CancellationToken cancellationToken = default) where TDtoRequest : IDto
     {
+        ValidatorResult validationResult = await _validationService.ValidateAsync(updateModel, cancellationToken);
+        if (!validationResult.IsValid)
+            return Result<TEntity>.Validation(validationResult.Failures, description: $"Validation failed for {nameof(TDtoRequest)}");
+
         TEntity? entity = await _repository.GetAsync(where: where, cancellationToken: cancellationToken);
-        if (entity == null) throw new GeneralException($"The entity({nameof(TEntity)}) was not found to update.");
-
-        TEntity entityToUpdate = _mapper.Map(updateModel, entity);
-        return await _repository.UpdateAndSaveAsync(entityToUpdate, cancellationToken);
-    }
-
-    public async Task<TDtoResponse> _UpdateAsync<TDtoRequest, TDtoResponse>(TDtoRequest updateModel, Expression<Func<TEntity, bool>> where, CancellationToken cancellationToken = default) where TDtoRequest : IDto where TDtoResponse : IDto
-    {
-        TEntity? entity = await _repository.GetAsync(where: where, cancellationToken: cancellationToken);
-        if (entity == null) throw new GeneralException($"The entity({nameof(TEntity)}) was not found to update.");
+        if (entity == null)
+            return Result<TEntity>.NotFound(description: $"The entity({nameof(TEntity)}) was not found to update.");
 
         TEntity entityToUpdate = _mapper.Map(updateModel, entity);
         TEntity updatedEntity = await _repository.UpdateAndSaveAsync(entityToUpdate, cancellationToken);
-        return _mapper.Map<TDtoResponse>(updatedEntity);
+        return Result<TEntity>.Success(updatedEntity);
+    }
+
+    protected virtual async Task<Result<TDtoResponse>> UpdateAsync<TDtoRequest, TDtoResponse>(TDtoRequest updateModel, Expression<Func<TEntity, bool>> where, CancellationToken cancellationToken = default) where TDtoRequest : IDto where TDtoResponse : IDto
+    {
+        ValidatorResult validationResult = await _validationService.ValidateAsync(updateModel, cancellationToken);
+        if (!validationResult.IsValid)
+            return Result<TDtoResponse>.Validation(validationResult.Failures, description: $"Validation failed for {nameof(TDtoRequest)}");
+
+        TEntity? entity = await _repository.GetAsync(where: where, cancellationToken: cancellationToken);
+        if (entity == null)
+            return Result<TDtoResponse>.NotFound(description: $"The entity({nameof(TEntity)}) was not found to update.");
+
+        TEntity entityToUpdate = _mapper.Map(updateModel, entity);
+        TEntity updatedEntity = await _repository.UpdateAndSaveAsync(entityToUpdate, cancellationToken);
+        TDtoResponse responseModel = _mapper.Map<TDtoResponse>(updatedEntity);
+        return Result<TDtoResponse>.Success(responseModel);
     }
     #endregion
 
     #region UpdateList
-    public async Task<List<TEntity>> _UpdateListAsync(IEnumerable<TEntity> entityList, CancellationToken cancellationToken = default)
+    protected virtual async Task<Result<ICollection<TEntity>>> UpdateListAsync(IEnumerable<TEntity> entityList, CancellationToken cancellationToken = default)
     {
-        return await _repository.UpdateAndSaveAsync(entityList, cancellationToken);
+        ICollection<TEntity> updatedEntityList = await _repository.UpdateAndSaveAsync(entityList, cancellationToken);
+        return Result<ICollection<TEntity>>.Success(updatedEntityList);
     }
 
-    public async Task<List<TDtoResponse>> _UpdateListAsync<TDtoResponse>(IEnumerable<TEntity> entityList, CancellationToken cancellationToken = default) where TDtoResponse : IDto
+    protected virtual async Task<Result<ICollection<TDtoResponse>>> UpdateListAsync<TDtoResponse>(IEnumerable<TEntity> entityList, CancellationToken cancellationToken = default) where TDtoResponse : IDto
     {
-        List<TEntity> updatedList = await _repository.UpdateAndSaveAsync(entityList, cancellationToken);
-        return _mapper.Map<List<TDtoResponse>>(updatedList);
+        ICollection<TEntity> updatedEntityList = await _repository.UpdateAndSaveAsync(entityList, cancellationToken);
+        ICollection<TDtoResponse> responseModelList = _mapper.Map<ICollection<TDtoResponse>>(updatedEntityList);
+        return Result<ICollection<TDtoResponse>>.Success(responseModelList);
     }
     #endregion
 
     #region Delete
-    public async Task _DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
+    protected virtual async Task<Result> DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         await _repository.DeleteAndSaveAsync(entity, cancellationToken);
+        return Result.Success();
     }
 
-    public async Task _DeleteAsync(IEnumerable<TEntity> entityList, CancellationToken cancellationToken = default)
+    protected virtual async Task<Result> DeleteAsync(IEnumerable<TEntity> entityList, CancellationToken cancellationToken = default)
     {
         await _repository.DeleteAndSaveAsync(entityList, cancellationToken);
+        return Result.Success();
     }
 
-    public async Task _DeleteAsync(Expression<Func<TEntity, bool>> where, CancellationToken cancellationToken = default)
+    protected virtual async Task<Result> DeleteAsync(Expression<Func<TEntity, bool>> where, CancellationToken cancellationToken = default)
     {
         await _repository.DeleteAndSaveAsync(where, cancellationToken);
+        return Result.Success();
+    }
+
+    protected virtual async Task<Result> UndoDeleteAsync(Expression<Func<TEntity, bool>> where, CancellationToken cancellationToken = default)
+    {
+        TEntity? originalEntity = await _repository.GetAsync(where: where, ignoreFilters: true, cancellationToken: cancellationToken);
+
+        if (originalEntity == null)
+            return Result.NotFound(description: $"The entity({nameof(TEntity)}) was not found to undo deletion.");
+
+        if (originalEntity is not ISoftDeletableEntity softEntity)
+            return Result.Failure(description: "The entity must implement ISoftDeletableEntity for undo deletion.");
+
+        softEntity.IsDeleted = false;
+        softEntity.DeletedBy = null;
+        softEntity.DeletedDateUtc = null;
+
+        await _repository.UpdateAndSaveAsync(originalEntity, cancellationToken);
+
+        return Result.Success();
     }
     #endregion
 
     #region IsExist & Count
-    public async Task<bool> _IsExistAsync(Filter? filter = null, Expression<Func<TEntity, bool>>? where = null, bool ignoreFilters = false, CancellationToken cancellationToken = default)
+    protected virtual async Task<Result<bool>> IsExistAsync(Filter? filter = null, Expression<Func<TEntity, bool>>? where = null, bool ignoreFilters = false, CancellationToken cancellationToken = default)
     {
-        return await _repository.IsExistAsync(filter, where, ignoreFilters, cancellationToken);
+        bool isExist = await _repository.IsExistAsync(filter, where, ignoreFilters, cancellationToken: cancellationToken);
+        return Result<bool>.Success(isExist);
     }
 
-    public async Task<int> _CountAsync(Filter? filter = null, Expression<Func<TEntity, bool>>? where = null, bool ignoreFilters = false, CancellationToken cancellationToken = default)
+    protected virtual async Task<Result<int>> CountAsync(Filter? filter = null, Expression<Func<TEntity, bool>>? where = null, bool ignoreFilters = false, CancellationToken cancellationToken = default)
     {
-        return await _repository.CountAsync(filter, where, ignoreFilters, cancellationToken);
+        int count = await _repository.CountAsync(filter, where, ignoreFilters, cancellationToken: cancellationToken);
+        return Result<int>.Success(count);
     }
     #endregion
 
     #region Get
-    public async Task<TEntity?> _GetAsync(
+    protected virtual async Task<Result<TEntity>> GetAsync(
         Filter? filter = null,
         IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
@@ -678,12 +807,16 @@ public class ServiceBase<TEntity, TRepository> : IServiceBase<TEntity>, IService
             include: include,
             ignoreFilters: ignoreFilters,
             tracking: tracking,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken
+        );
 
-        return entity;
+        if (entity == null)
+            return Result<TEntity>.NotFound(description: $"The entity({nameof(TEntity)}) was not found.");
+
+        return Result<TEntity>.Success(entity);
     }
 
-    public async Task<TDtoResponse?> _GetAsync<TDtoResponse>(
+    protected virtual async Task<Result<TDtoResponse>> GetAsync<TDtoResponse>(
         Expression<Func<TEntity, TDtoResponse>> select,
         Filter? filter = null,
         IEnumerable<Sort>? sorts = null,
@@ -691,7 +824,6 @@ public class ServiceBase<TEntity, TRepository> : IServiceBase<TEntity>, IService
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
-        bool tracking = false,
         CancellationToken cancellationToken = default) where TDtoResponse : IDto
     {
         TDtoResponse? responseModel = await _repository.GetAsync(
@@ -702,13 +834,16 @@ public class ServiceBase<TEntity, TRepository> : IServiceBase<TEntity>, IService
             orderBy: orderBy,
             include: include,
             ignoreFilters: ignoreFilters,
-            tracking: tracking,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken
+        );
 
-        return responseModel;
+        if (responseModel == null)
+            return Result<TDtoResponse>.NotFound(description: $"The entity({nameof(TEntity)}) was not found.");
+
+        return Result<TDtoResponse>.Success(responseModel);
     }
 
-    public async Task<object?> _GetAsync(
+    protected virtual async Task<Result<object>> GetAsync(
         Expression<Func<TEntity, object>> select,
         Filter? filter = null,
         IEnumerable<Sort>? sorts = null,
@@ -716,7 +851,6 @@ public class ServiceBase<TEntity, TRepository> : IServiceBase<TEntity>, IService
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
-        bool tracking = false,
         CancellationToken cancellationToken = default)
     {
         object? responseModel = await _repository.GetAsync(
@@ -727,20 +861,22 @@ public class ServiceBase<TEntity, TRepository> : IServiceBase<TEntity>, IService
             orderBy: orderBy,
             include: include,
             ignoreFilters: ignoreFilters,
-            tracking: tracking,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken
+        );
 
-        return responseModel;
+        if (responseModel == null)
+            return Result<object>.NotFound(description: $"The entity({nameof(TEntity)}) was not found.");
+
+        return Result<object>.Success(responseModel);
     }
 
-    public async Task<TDtoResponse?> _GetAsync<TDtoResponse>(
+    protected virtual async Task<Result<TDtoResponse>> GetAsync<TDtoResponse>(
         Filter? filter = null,
         IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
-        bool tracking = false,
         CancellationToken cancellationToken = default) where TDtoResponse : IDto
     {
         TDtoResponse? responseModel = await _repository.GetAsync<TDtoResponse>(
@@ -751,15 +887,18 @@ public class ServiceBase<TEntity, TRepository> : IServiceBase<TEntity>, IService
             orderBy: orderBy,
             include: include,
             ignoreFilters: ignoreFilters,
-            tracking: tracking,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken
+        );
 
-        return responseModel;
+        if (responseModel == null)
+            return Result<TDtoResponse>.NotFound(description: $"The entity({nameof(TEntity)}) was not found.");
+
+        return Result<TDtoResponse>.Success(responseModel);
     }
     #endregion
 
     #region GetList
-    public async Task<ICollection<TEntity>?> _GetListAsync(
+    protected virtual async Task<Result<ICollection<TEntity>>> GetListAsync(
         Filter? filter = null,
         IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
@@ -769,7 +908,7 @@ public class ServiceBase<TEntity, TRepository> : IServiceBase<TEntity>, IService
         bool tracking = true,
         CancellationToken cancellationToken = default)
     {
-        ICollection<TEntity>? entity = await _repository.GetAllAsync(
+        ICollection<TEntity>? entities = await _repository.GetAllAsync(
             filter: filter,
             sorts: sorts,
             where: where,
@@ -777,12 +916,16 @@ public class ServiceBase<TEntity, TRepository> : IServiceBase<TEntity>, IService
             include: include,
             ignoreFilters: ignoreFilters,
             tracking: tracking,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken
+        );
 
-        return entity;
+        if (entities == null)
+            return Result<ICollection<TEntity>>.NotFound(description: $"The entities({nameof(TEntity)}) was not found.");
+
+        return Result<ICollection<TEntity>>.Success(entities);
     }
 
-    public async Task<ICollection<TDtoResponse>?> _GetListAsync<TDtoResponse>(
+    protected virtual async Task<Result<ICollection<TDtoResponse>>> GetListAsync<TDtoResponse>(
         Expression<Func<TEntity, TDtoResponse>> select,
         Filter? filter = null,
         IEnumerable<Sort>? sorts = null,
@@ -790,7 +933,6 @@ public class ServiceBase<TEntity, TRepository> : IServiceBase<TEntity>, IService
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
-        bool tracking = false,
         CancellationToken cancellationToken = default) where TDtoResponse : IDto
     {
         ICollection<TDtoResponse>? responseModel = await _repository.GetAllAsync(
@@ -801,13 +943,16 @@ public class ServiceBase<TEntity, TRepository> : IServiceBase<TEntity>, IService
             orderBy: orderBy,
             include: include,
             ignoreFilters: ignoreFilters,
-            tracking: tracking,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken
+        );
 
-        return responseModel;
+        if (responseModel == null)
+            return Result<ICollection<TDtoResponse>>.NotFound(description: $"The entities({nameof(TEntity)}) was not found.");
+
+        return Result<ICollection<TDtoResponse>>.Success(responseModel);
     }
 
-    public async Task<ICollection<object>?> _GetListAsync(
+    protected virtual async Task<Result<ICollection<object>>> GetListAsync(
         Expression<Func<TEntity, object>> select,
         Filter? filter = null,
         IEnumerable<Sort>? sorts = null,
@@ -815,7 +960,6 @@ public class ServiceBase<TEntity, TRepository> : IServiceBase<TEntity>, IService
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
-        bool tracking = false,
         CancellationToken cancellationToken = default)
     {
         ICollection<object>? responseModel = await _repository.GetAllAsync(
@@ -826,20 +970,22 @@ public class ServiceBase<TEntity, TRepository> : IServiceBase<TEntity>, IService
             orderBy: orderBy,
             include: include,
             ignoreFilters: ignoreFilters,
-            tracking: tracking,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken
+        );
 
-        return responseModel;
+        if (responseModel == null)
+            return Result<ICollection<object>>.NotFound(description: $"The entities({nameof(TEntity)}) was not found.");
+
+        return Result<ICollection<object>>.Success(responseModel);
     }
 
-    public async Task<ICollection<TDtoResponse>?> _GetListAsync<TDtoResponse>(
+    protected virtual async Task<Result<ICollection<TDtoResponse>>> GetListAsync<TDtoResponse>(
         Filter? filter = null,
         IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
-        bool tracking = false,
         CancellationToken cancellationToken = default) where TDtoResponse : IDto
     {
         ICollection<TDtoResponse>? responseModel = await _repository.GetAllAsync<TDtoResponse>(
@@ -850,207 +996,208 @@ public class ServiceBase<TEntity, TRepository> : IServiceBase<TEntity>, IService
             orderBy: orderBy,
             include: include,
             ignoreFilters: ignoreFilters,
-            tracking: tracking,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken
+        );
 
-        return responseModel;
+        if (responseModel == null)
+            return Result<ICollection<TDtoResponse>>.NotFound(description: $"The entities({nameof(TEntity)}) was not found.");
+
+        return Result<ICollection<TDtoResponse>>.Success(responseModel);
     }
     #endregion
 
     #region Datatable Server-Side
-    public async Task<DatatableResponseServerSide<TEntity>> _DatatableServerSideAsync(
-        DatatableRequest datatableRequest,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+    protected virtual async Task<Result<DatatableResponseServerSide<TEntity>>> DatatableServerSideAsync(
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = true,
         CancellationToken cancellationToken = default)
     {
-        return await _repository.DatatableServerSideAsync(
+        DatatableResponseServerSide<TEntity> data = await _repository.DatatableServerSideAsync(
             datatableRequest: datatableRequest,
-            filter: filter,
-            sorts: sorts,
             where: where,
             orderBy: orderBy,
             include: include,
             ignoreFilters: ignoreFilters,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken
+        );
+
+        return Result<DatatableResponseServerSide<TEntity>>.Success(data);
     }
 
-    public async Task<DatatableResponseServerSide<TDtoResponse>> _DatatableServerSideAsync<TDtoResponse>(
-        DatatableRequest datatableRequest,
-        Expression<Func<TEntity, TDtoResponse>> select, Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+    protected virtual async Task<Result<DatatableResponseServerSide<TDtoResponse>>> DatatableServerSideAsync<TDtoResponse>(
+        DynamicDatatableRequest datatableRequest,
+        Expression<Func<TEntity, TDtoResponse>> select,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = true,
         CancellationToken cancellationToken = default) where TDtoResponse : IDto
     {
-        return await _repository.DatatableServerSideAsync<TDtoResponse>(
+        DatatableResponseServerSide<TDtoResponse> data = await _repository.DatatableServerSideAsync<TDtoResponse>(
             datatableRequest: datatableRequest,
             select: select,
-            filter: filter,
-            sorts: sorts,
             where: where,
             orderBy: orderBy,
             include: include,
             ignoreFilters: ignoreFilters,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken
+        );
+
+        return Result<DatatableResponseServerSide<TDtoResponse>>.Success(data);
     }
 
-    public async Task<DatatableResponseServerSide<TDtoResponse>> _DatatableServerSideAsync<TDtoResponse>(
-        DatatableRequest datatableRequest,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+    protected virtual async Task<Result<DatatableResponseServerSide<TDtoResponse>>> DatatableServerSideAsync<TDtoResponse>(
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = true,
         CancellationToken cancellationToken = default) where TDtoResponse : IDto
     {
-        return await _repository.DatatableServerSideAsync<TDtoResponse>(
+        DatatableResponseServerSide<TDtoResponse> data = await _repository.DatatableServerSideAsync<TDtoResponse>(
             datatableRequest: datatableRequest,
             configurationProvider: _mapper.ConfigurationProvider,
-            filter: filter,
-            sorts: sorts,
             where: where,
             orderBy: orderBy,
             include: include,
             ignoreFilters: ignoreFilters,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken
+        );
+
+        return Result<DatatableResponseServerSide<TDtoResponse>>.Success(data);
     }
     #endregion
 
     #region Datatable Client-Side
-    public async Task<DatatableResponseClientSide<TEntity>> _DatatableClientSideAsync(
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+    protected virtual async Task<Result<DatatableResponseClientSide<TEntity>>> DatatableClientSideAsync(
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = true,
         CancellationToken cancellationToken = default)
     {
-        return await _repository.DatatableClientSideAsync(
-            filter: filter,
-            sorts: sorts,
+        DatatableResponseClientSide<TEntity> data = await _repository.DatatableClientSideAsync(
+            datatableRequest: datatableRequest,
             where: where,
             orderBy: orderBy,
             include: include,
             ignoreFilters: ignoreFilters,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken
+        );
+
+        return Result<DatatableResponseClientSide<TEntity>>.Success(data);
     }
 
-    public async Task<DatatableResponseClientSide<TDtoResponse>> _DatatableClientSideAsync<TDtoResponse>(
+    protected virtual async Task<Result<DatatableResponseClientSide<TDtoResponse>>> DatatableClientSideAsync<TDtoResponse>(
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, TDtoResponse>> select,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = true,
         CancellationToken cancellationToken = default) where TDtoResponse : IDto
     {
-        return await _repository.DatatableClientSideAsync<TDtoResponse>(
+        DatatableResponseClientSide<TDtoResponse> data = await _repository.DatatableClientSideAsync<TDtoResponse>(
+            datatableRequest: datatableRequest,
             select: select,
-            filter: filter,
-            sorts: sorts,
             where: where,
             orderBy: orderBy,
             include: include,
             ignoreFilters: ignoreFilters,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken
+        );
+
+        return Result<DatatableResponseClientSide<TDtoResponse>>.Success(data);
     }
 
-    public async Task<DatatableResponseClientSide<TDtoResponse>> _DatatableClientSideAsync<TDtoResponse>(
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+    protected virtual async Task<Result<DatatableResponseClientSide<TDtoResponse>>> DatatableClientSideAsync<TDtoResponse>(
+        DynamicDatatableRequest datatableRequest,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = true,
         CancellationToken cancellationToken = default) where TDtoResponse : IDto
     {
-        return await _repository.DatatableClientSideAsync<TDtoResponse>(
+        DatatableResponseClientSide<TDtoResponse> data = await _repository.DatatableClientSideAsync<TDtoResponse>(
+            datatableRequest: datatableRequest,
             configurationProvider: _mapper.ConfigurationProvider,
-            filter: filter,
-            sorts: sorts,
             where: where,
             orderBy: orderBy,
             include: include,
             ignoreFilters: ignoreFilters,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken
+        );
+
+        return Result<DatatableResponseClientSide<TDtoResponse>>.Success(data);
     }
     #endregion
 
     #region Pagination
-    public async Task<PaginationResponse<TEntity>> _PaginationAsync(
-        PaginationRequest paginationRequest,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+    protected virtual async Task<Result<PaginationResponse<TEntity>>> PaginationAsync(
+        DynamicPaginationRequest paginationRequest,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
         CancellationToken cancellationToken = default)
     {
-        return await _repository.PaginationAsync(
+        PaginationResponse<TEntity> data = await _repository.PaginationAsync(
             paginationRequest: paginationRequest,
-            filter: filter,
-            sorts: sorts,
             where: where,
             orderBy: orderBy,
             include: include,
             ignoreFilters: ignoreFilters,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken
+        );
+
+        return Result<PaginationResponse<TEntity>>.Success(data);
     }
 
-    public async Task<PaginationResponse<TDtoResponse>> _PaginationAsync<TDtoResponse>(
-        PaginationRequest paginationRequest,
+    protected virtual async Task<Result<PaginationResponse<TDtoResponse>>> PaginationAsync<TDtoResponse>(
+        DynamicPaginationRequest paginationRequest,
         Expression<Func<TEntity, TDtoResponse>> select,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
         CancellationToken cancellationToken = default) where TDtoResponse : IDto
     {
-        return await _repository.PaginationAsync<TDtoResponse>(
+        PaginationResponse<TDtoResponse> data = await _repository.PaginationAsync<TDtoResponse>(
             paginationRequest: paginationRequest,
             select: select,
-            filter: filter,
-            sorts: sorts,
             where: where,
             orderBy: orderBy,
             include: include,
             ignoreFilters: ignoreFilters,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken
+        );
+
+        return Result<PaginationResponse<TDtoResponse>>.Success(data);
     }
 
-    public async Task<PaginationResponse<TDtoResponse>> _PaginationAsync<TDtoResponse>(
-        PaginationRequest paginationRequest,
-        Filter? filter = null,
-        IEnumerable<Sort>? sorts = null,
+    protected virtual async Task<Result<PaginationResponse<TDtoResponse>>> PaginationAsync<TDtoResponse>(
+        DynamicPaginationRequest paginationRequest,
         Expression<Func<TEntity, bool>>? where = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
         Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object?>>? include = null,
         bool ignoreFilters = false,
         CancellationToken cancellationToken = default) where TDtoResponse : IDto
     {
-        return await _repository.PaginationAsync<TDtoResponse>(
+        PaginationResponse<TDtoResponse> data = await _repository.PaginationAsync<TDtoResponse>(
             paginationRequest: paginationRequest,
             configurationProvider: _mapper.ConfigurationProvider,
-            filter: filter,
-            sorts: sorts,
             where: where,
             orderBy: orderBy,
             include: include,
             ignoreFilters: ignoreFilters,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken
+        );
+
+        return Result<PaginationResponse<TDtoResponse>>.Success(data);
     }
     #endregion
 }

@@ -3,15 +3,15 @@ using FluentValidation;
 
 namespace Model.Auth.Login;
 
-public class LoginRequest
+public abstract class LoginRequest
 {
     public string Email { get; set; } = null!;
 
     [CriticalData]
     public string Password { get; set; } = null!;
-    public bool RememberMe { get; set; } = false;
+    public Guid? DeviceId { get; set; }
+    public string ClientType { get; set; } = null!;
 }
-
 
 public class LoginRequestValidator : AbstractValidator<LoginRequest>
 {
@@ -19,5 +19,6 @@ public class LoginRequestValidator : AbstractValidator<LoginRequest>
     {
         RuleFor(b => b.Email).NotNull().EmailAddress().NotEmpty().EmailAddress();
         RuleFor(b => b.Password).NotNull().MinimumLength(6).NotEmpty();
+        RuleFor(b => b.ClientType).NotNull().NotEmpty();
     }
 }

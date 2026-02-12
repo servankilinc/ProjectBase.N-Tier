@@ -21,24 +21,24 @@
                 <form asp-controller="Account" asp-action="SignUp" method="post" class="mb-6">
                     <div class="mb-6">
                         <label asp-for="FirstName" class="form-label">First Name</label>
-                        <input asp-for="FirstName" class="form-control" autofocus />
-                        <span asp-validation-for="FirstName"></span>
+                        <input asp-for="FirstName" class="form-control" type="text" autofocus />
+                        <span asp-validation-for="FirstName" class="form_validation_feedback"></span>
                     </div>
                     <div class="mb-6">
                         <label asp-for="LastName" class="form-label">Last Name</label>
                         <input asp-for="LastName" class="form-control" autofocus />
-                        <span asp-validation-for="LastName"></span>
+                        <span asp-validation-for="LastName" class="form_validation_feedback"></span>
                     </div>
                     <div class="mb-6">
                         <label asp-for="Email" class="form-label">Email</label>
                         <input asp-for="Email" class="form-control" autofocus />
-                        <span asp-validation-for="Email"></span>
+                        <span asp-validation-for="Email" class="form_validation_feedback"></span>
                     </div>
                     <div>
                         <label asp-for="Password" class="form-label">Password</label>
                         <div class="input-group">
                             <input asp-for="Password" type="password" class="form-control" placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;" /> 
-                            <span asp-validation-for="Password"></span>
+                            <span asp-validation-for="Password" class="form_validation_feedback"></span>
                         </div>
                     </div>
                     <div class="my-7">

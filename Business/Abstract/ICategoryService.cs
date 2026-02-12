@@ -1,65 +1,55 @@
-﻿using Business.ServiceBase;
-using Core.BaseRequestModels;
-using Core.Model;
+﻿using Core.BaseRequestModels;
 using Core.Utils.Datatable;
 using Core.Utils.Pagination;
+using Core.Utils.ResultPattern;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Model.Dtos.Category_;
+using Model.Dtos.Category.Commands;
+using Model.Dtos.Category.Queries;
 using Model.Entities;
 using System.Linq.Expressions;
 
 namespace Business.Abstract;
 
-public interface ICategoryService : IServiceBase<Category>, IServiceBaseAsync<Category>
+public interface ICategoryService
 {
-    #region Get Entity
-    Task<Category?> GetAsync(Expression<Func<Category, bool>> where, CancellationToken cancellationToken = default);
-    Task<ICollection<Category>?> GetListAsync(Expression<Func<Category, bool>>? where = default, CancellationToken cancellationToken = default);
+    #region Get
+    Task<Result<Category>> GetAsync(Expression<Func<Category, bool>> where, CancellationToken cancellationToken = default);
+    Task<Result<Category>> GetAsync(Guid Id, CancellationToken cancellationToken = default);
+    Task<Result<CategoryResponseDto>> GetBasicAsync(Guid Id, CancellationToken cancellationToken = default);
+    Task<Result<CategoryBlogsResponseDto>> GetDetailAsync(Guid Id, CancellationToken cancellationToken = default);
     #endregion
 
-    #region Get Generic
-    Task<TResponse?> GetAsync<TResponse>(Expression<Func<Category, bool>> where, CancellationToken cancellationToken = default) where TResponse : IDto;
-    Task<ICollection<TResponse>?> GetListAsync<TResponse>(Expression<Func<Category, bool>>? where = default, CancellationToken cancellationToken = default) where TResponse : IDto;
+    #region GetList
+    Task<Result<ICollection<Category>>> GetListAsync(Expression<Func<Category, bool>>? where = null, CancellationToken cancellationToken = default);
+    Task<Result<ICollection<Category>>> GetListAsync(DynamicRequest? request, CancellationToken cancellationToken = default);
+    Task<Result<ICollection<CategoryResponseDto>>> GetBasicListAsync(DynamicRequest? request, CancellationToken cancellationToken = default);
+    Task<Result<ICollection<CategoryBlogsResponseDto>>> GetDetailListAsync(DynamicRequest? request, CancellationToken cancellationToken = default);
     #endregion
 
     #region SelectList
-    Task<SelectList> GetSelectListAsync(Expression<Func<Category, bool>>? where = default, CancellationToken cancellationToken = default);
-    #endregion
-
-    #region Get
-    Task<Category?> GetAsync(Guid Id, CancellationToken cancellationToken = default);
-    Task<ICollection<Category>?> GetAllAsync(DynamicRequest? request, CancellationToken cancellationToken = default);
-    Task<PaginationResponse<Category>> GetListAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default);
-    #endregion
-
-    #region GetBasic
-    Task<CategoryResponseDto?> GetByBasicAsync(Guid Id, CancellationToken cancellationToken = default);
-    Task<ICollection<CategoryResponseDto>?> GetAllByBasicAsync(DynamicRequest? request, CancellationToken cancellationToken = default);
-    Task<PaginationResponse<CategoryResponseDto>> GetListByBasicAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default);
-    #endregion
-
-    #region GetDetail
-    Task<CategoryBlogsResponseDto?> GetByDetailAsync(Guid Id, CancellationToken cancellationToken = default);
-    Task<ICollection<CategoryBlogsResponseDto>?> GetAllByDetailAsync(DynamicRequest? request, CancellationToken cancellationToken = default);
-    Task<PaginationResponse<CategoryBlogsResponseDto>> GetListByDetailAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default);
+    Task<Result<SelectList>> SelectListAsync(Expression<Func<Category, bool>>? where = null, CancellationToken cancellationToken = default);
     #endregion
 
     #region Create
-    Task<CategoryResponseDto> CreateAsync(CategoryCreateDto request, CancellationToken cancellationToken = default);
+    Task<Result<CategoryResponseDto>> CreateAsync(CategoryCreateDto request, CancellationToken cancellationToken = default);
     #endregion
 
     #region Update
-    Task<CategoryResponseDto> UpdateAsync(CategoryUpdateDto request, CancellationToken cancellationToken = default);
+    Task<Result<CategoryResponseDto>> UpdateAsync(CategoryUpdateDto request, CancellationToken cancellationToken = default);
     #endregion
 
     #region Delete
-    Task DeleteAsync(Guid Id, CancellationToken cancellationToken = default);
+    Task<Result> DeleteAsync(Guid Id, CancellationToken cancellationToken = default);
+    Task<Result> UndoDeleteAsync(Guid Id, CancellationToken cancellationToken = default);
     #endregion
 
-    #region Datatable Methods
-    Task<DatatableResponseClientSide<Category>> DatatableClientSideAsync(DynamicRequest request, CancellationToken cancellationToken = default);
-    Task<DatatableResponseClientSide<CategoryReportDto>> DatatableClientSideByReportAsync(DynamicRequest request, CancellationToken cancellationToken = default);
-    Task<DatatableResponseServerSide<Category>> DatatableServerSideAsync(DynamicDatatableServerSideRequest request, CancellationToken cancellationToken = default);
-    Task<DatatableResponseServerSide<CategoryReportDto>> DatatableServerSideByReportAsync(DynamicDatatableServerSideRequest request, CancellationToken cancellationToken = default);
+    #region Pagination
+    Task<Result<PaginationResponse<Category>>> PaginationAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default);
+    Task<Result<PaginationResponse<CategoryReportDto>>> PaginationReportAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default);
+    #endregion
+
+    #region Datatable
+    Task<Result<DatatableResponseClientSide<CategoryReportDto>>> DatatableClientSideAsync(DynamicDatatableRequest request, CancellationToken cancellationToken = default);
+    Task<Result<DatatableResponseServerSide<CategoryReportDto>>> DatatableServerSideAsync(DynamicDatatableRequest request, CancellationToken cancellationToken = default);
     #endregion
 }

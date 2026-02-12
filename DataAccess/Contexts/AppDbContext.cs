@@ -19,14 +19,10 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid> //
     public DbSet<BlogComment> BlogComments { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
 
-    // Project Entities
+    #region Project Entities
     public DbSet<Log> Logs { get; set; }
     public DbSet<Archive> Archives { get; set; }
-    public DbSet<Language> Languages { get; set; }
-    public DbSet<Localization> Localizations { get; set; }
-    public DbSet<LocalizationLanguageDetail> LocalizationLanguageDetails { get; set; }
-
-    // Project Entities
+    #endregion
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -59,7 +55,6 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid> //
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // ****** If SoftDeletable is used, the filter should be applied to all entities
             u.HasQueryFilter(f => !f.IsDeleted);
         });
 
@@ -164,70 +159,6 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid> //
             a.ToTable("ProjectArchives");
 
             a.HasKey(a => a.Id);
-        });
-        
-        modelBuilder.Entity<Language>(l =>
-        {
-            l.ToTable("ProjectLanguages");
-
-            l.HasKey(l => l.Id);
-
-            l.HasData(
-                new Language
-                {
-                    Id = (byte)Core.Enums.Languages.Turkish,
-                    Name = "Türkçe",
-                    Code = "tr-TR",
-                    Icon = "tr.png",
-                    Priority = 1,
-                    ResourceFileName = "resources.tr.resx",
-                    ResourceFileVersion = 1
-                }, new Language
-                {
-                    Id = (byte)Core.Enums.Languages.English,
-                    Name = "English",
-                    Code = "en-US",
-                    Icon = "en.png",
-                    Priority = 2,
-                    ResourceFileName = "resources.en.resx",
-                    ResourceFileVersion = 1
-                },
-                new Language
-                {
-                    Id = (byte)Core.Enums.Languages.Russian,
-                    Name = "Russian",
-                    Code = "ru-RU",
-                    Icon = "ru.png",
-                    Priority = 3,
-                    ResourceFileName = "resources.ru.resx",
-                    ResourceFileVersion = 1
-                }
-            );
-
-            l.HasMany(l => l.LocalizationLanguageDetails)
-                .WithOne(lld => lld.Language)
-                .HasForeignKey(lld => lld.LanguageId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-        
-        modelBuilder.Entity<Localization>(l =>
-        {
-            l.ToTable("ProjectLocalizations");
-            l.HasKey(l => l.Id);
-
-            l.HasMany(l => l.LocalizationLanguageDetails)
-                .WithOne(lld => lld.Localization)
-                .HasForeignKey(lld => lld.LocalizationId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            l.HasIndex(l => l.EntityId);
-        });
-        
-        modelBuilder.Entity<LocalizationLanguageDetail>(lld =>
-        {
-            lld.ToTable("ProjectLocalizationLanguageDetails");
-
-            lld.HasKey(lld => new { lld.LocalizationId, lld.LanguageId });
         });
 
 

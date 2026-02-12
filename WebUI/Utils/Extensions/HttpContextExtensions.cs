@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using Microsoft.AspNetCore.Localization;
+using System.Text;
 
 namespace WebUI.Utils.Extensions;
 
@@ -61,5 +62,21 @@ public static class HttpContextExtensions
         {
             Expires = DateTime.Now.AddDays(7),
         });
+    }
+
+    public static string GetCurrentLanguage(this HttpContext httpContext)
+    {
+        string defaultCulture = "tr-TR";
+        if (httpContext == null) return defaultCulture;
+
+        var cookieName = CookieRequestCultureProvider.DefaultCookieName;
+        var cookieValue = httpContext.Request.Cookies[cookieName];
+        if (string.IsNullOrWhiteSpace(cookieValue)) return defaultCulture;
+
+        var requestCulture = CookieRequestCultureProvider.ParseCookieValue(cookieValue);
+        var cultureInfo = requestCulture?.Cultures.FirstOrDefault().Value;
+        if (string.IsNullOrWhiteSpace(cultureInfo)) return defaultCulture;
+
+        return cultureInfo;
     }
 }

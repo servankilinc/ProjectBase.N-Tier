@@ -8,7 +8,7 @@
     <div class="card-header">
         <form id="form_user_filter">
             <div class="row row-gap-4">
-                <div class="col-md-3 col-sm-4 col-6">
+                <div class="col-md-4 col-md-6 col-12">
                     <div class="input-group">
                         <span class="input-group-text bg-lightest">
                             Name
@@ -16,7 +16,7 @@
                         <input name="Name" type="text" class="form-control" />
                     </div>
                 </div>
-                <div class="col-md-3 col-sm-4 col-6">
+                <div class="col-md-4 col-md-6 col-12">
                     <div class="input-group">
                         <span class="input-group-text bg-lightest">
                             Last Name
@@ -24,7 +24,7 @@
                         <input name="LastName" type="text" class="form-control" />
                     </div>
                 </div>
-                <div class="col-md-3 col-sm-4 col-6">
+                <div class="col-md-4 col-md-6 col-12">
                     <div class="input-group">
                         <span class="input-group-text bg-lightest">
                             Email
@@ -32,8 +32,8 @@
                         <input name="Email" type="text" class="form-control" />
                     </div>
                 </div>
-                <div class="col-md-3 col-sm-4 col-6">
-                    <div class="input-group col-md-3 col-sm-4 col-6">
+                <div class="col-md-4 col-md-6 col-12">
+                    <div class="input-group">
                         <span class="input-group-text bg-lightest">
                             Include Deleted
                         </span>
@@ -179,75 +179,35 @@
                         searchable: false,
                         createdCell: function (td, cellData, rowData, row, col)
                         {
+                            let deleteHandleButton = rowData.isDeleted == true ?
+                                UIManager.UndoDeleteButtonTable({
+                                    requestUrl: 'User/UndoDelete',
+                                    requestData: {
+                                        "id": rowData.id
+                                    },
+                                    pageTable: PageTable
+                                }) :
+                                UIManager.DeleteButtonTable({
+                                    requestUrl: 'User/Delete',
+                                    requestData: {
+                                        "id": rowData.id
+                                    },
+                                    pageTable: PageTable
+                                });
+
                             DatatableManager.AppendRowButtons(td,
                                 [
                                     // 1) Update Button
-                                    DatatableManager.RowButton({
-                                        kind: DatatableManager.buttonKinds.update,
-                                        onClick: async (e_btn) =>
-                                        {
-                                            await RequestManager.Get({
-                                                path: 'User/UpdateForm',
-                                                requestData: {
-                                                    id: rowData.id
-                                                },
-                                                dataType: 'text',
-                                                showToastrSuccess: false,
-                                                buttonElement: e_btn.currentTarget,
-                                                onSuccess: (formHtml) =>
-                                                {
-                                                    ModalManager.CreateModal({
-                                                        title: "Update User Informations",
-                                                        innerHtml: formHtml,
-                                                        modalSize: "xl",
-                                                        buttons: [
-                                                            ModalManager.Button({
-                                                                kind: ModalManager.buttonKinds.update,
-                                                                onClick: (e_btn_modal, e_modal, e_form) =>
-                                                                {
-                                                                    RequestManager.HandleRequest({
-                                                                        type: e_form.attr("method"),
-                                                                        path: e_form.attr("action"),
-                                                                        requestData: e_form.serializeArray(),
-                                                                        buttonElement: e_btn_modal,
-                                                                        onSuccess: () =>
-                                                                        {
-                                                                            $(e_modal).modal("hide");
-                                                                            PageTable.reload();
-                                                                        }
-                                                                    })
-                                                                }
-                                                            })
-                                                        ]
-                                                    }).show();
-                                                }
-                                            })
-                                        }
+                                    UIManager.UpdateButtonTable({
+                                        title: 'Update User Informations',
+                                        formGetterUrl: 'User/UpdateForm',
+                                        requestData: {
+                                            "id": rowData.id
+                                        },
+                                        pageTable: PageTable
                                     }),
                                     // 2) Delete Button
-                                    DatatableManager.RowButton({
-                                        kind: DatatableManager.buttonKinds.delete,
-                                        onClick: async () =>
-                                        {
-                                            ModalManager.DeleteModal({
-                                                onClick: (e_btn, e_mdl) =>
-                                                {
-                                                    RequestManager.Delete({
-                                                        path: 'User/Delete',
-                                                        requestData: {
-                                                            id: rowData.id
-                                                        },
-                                                        buttonElement: e_btn,
-                                                        onSuccess: () =>
-                                                        {
-                                                            $(e_mdl).modal("hide");
-                                                            PageTable.reload();
-                                                        }
-                                                    })
-                                                }
-                                            }).show();
-                                        }
-                                    })
+                                    deleteHandleButton
                                 ]
                             );
                         }
@@ -261,38 +221,11 @@
                         className: 'create-new btn btn-primary mx-2',
                         action: (e_btn) =>
                         {
-                            RequestManager.Get({
-                                path: 'User/CreateForm',
-                                dataType: 'text',
-                                showToastrSuccess: false,
-                                buttonElement: e_btn.currentTarget,
-                                onSuccess: (formHtml) =>
-                                {
-                                    ModalManager.CreateModal({
-                                        title: "Add New User",
-                                        innerHtml: formHtml,
-                                        modalSize: "xl",
-                                        buttons: [
-                                            ModalManager.Button({
-                                                kind: ModalManager.buttonKinds.save,
-                                                onClick: (e_btn_modal, e_modal, e_form) =>
-                                                {
-                                                    RequestManager.HandleRequest({
-                                                        type: e_form.attr("method"),
-                                                        path: e_form.attr("action"),
-                                                        requestData: e_form.serializeArray(),
-                                                        buttonElement: e_btn_modal,
-                                                        onSuccess: () =>
-                                                        {
-                                                            $(e_modal).modal("hide");
-                                                            PageTable.reload();
-                                                        }
-                                                    })
-                                                }
-                                            })
-                                        ]
-                                    }).show();
-                                }
+                            UIManager.InsertModal({
+                                title: 'Add New User',
+                                formGetterUrl: 'User/CreateForm',
+                                e_btn: e_btn.currentTarget,
+                                pageTable: PageTable
                             })
                         }
                     }

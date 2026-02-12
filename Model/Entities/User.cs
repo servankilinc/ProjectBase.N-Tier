@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Model.Entities;
 
-public class User : IdentityUser<Guid>, IEntity, ISoftDeletableEntity, IAuditableEntity, ILoggableEntity, IArchivableEntity
+public class User : IdentityUser<Guid>, IEntity, ISoftDeletableEntity, IAuditableEntity, IArchivableEntity
 {
     // Id Email gibi alanları Identity kütüphanesi sağlıyor yinede girilebilir
     public override Guid Id { get; set; }

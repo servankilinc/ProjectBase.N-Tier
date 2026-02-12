@@ -11,9 +11,11 @@ using WebUI.Utils.ActionFilters;
 
 namespace WebUI.Controllers;
 
-public class UserController : Controller
+public class UserController : BaseController
 {
     private readonly IUserService _userService;
+    // private readonly RoleManager<IdentityRole<Guid>> _roleManager;
+    // private readonly UserManager<User> _userManager;
     public UserController(IUserService userService)
     {
         _userService = userService;
@@ -59,6 +61,14 @@ public class UserController : Controller
         await _userService.DeleteAsync(id);
         return Ok();
     }
+    
+    [HttpGet]
+    public async Task<IActionResult> UndoDelete(Guid id)
+    {
+        if (id == default) throw new ArgumentNullException(nameof(id));
+        await _userService._UndoDeleteAsync(f => f.Id == id);
+        return Ok();
+    }
 
     #region Datatable
     [HttpPost]
@@ -73,6 +83,8 @@ public class UserController : Controller
     [HttpGet]
     public async Task<IActionResult> CreateForm()
     {
+        // var allRoles = await _roleManager.Roles.Select(r => r.Name).ToListAsync();    
+        // RoleSelectList = allRoles.Select(r => new SelectListItem(r, r)).ToList()
         var viewModel = new UserCreateViewModel
         {
         };
@@ -83,9 +95,14 @@ public class UserController : Controller
     public async Task<IActionResult> UpdateForm(Guid id)
     {
         var data = await _userService.GetAsync<UserUpdateDto>(where: f => f.Id == id);
-
         if (data == null) return NotFound(data);
-
+        
+        // var user = await _userManager.FindByIdAsync(model.Id.ToString());
+        // if (user == null) return NotFound(user);
+        // var existRoles = await _userManager.GetRolesAsync(user);            
+        // var allRoles = await _roleManager.Roles.Select(r => r.Name).ToListAsync();
+        // RoleSelectList = allRoles.Select(r => new SelectListItem(r, r, r != null && existRoles.Contains(r))).ToList(),
+               
         var viewModel = new UserUpdateViewModel
         {
             UpdateModel = data

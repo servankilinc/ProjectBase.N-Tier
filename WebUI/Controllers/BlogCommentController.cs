@@ -8,7 +8,7 @@ using Model.Dtos.BlogComment_;
 
 namespace WebUI.Controllers;
 
-public class BlogCommentController : Controller
+public class BlogCommentController : BaseController
 {
     private readonly IBlogService _blogService;
     private readonly IBlogCommentService _blogCommentService;

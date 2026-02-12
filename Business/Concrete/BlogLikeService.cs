@@ -2,71 +2,113 @@
 using Business.Abstract;
 using Business.ServiceBase;
 using Core.BaseRequestModels;
-using Core.Model;
-using Core.Utils.CrossCuttingConcerns;
 using Core.Utils.Datatable;
 using Core.Utils.Pagination;
+using Core.Utils.ResultPattern;
+using Core.Utils.Validation;
 using DataAccess.Abstract;
-using Microsoft.AspNetCore.Mvc.Rendering;
+using DataAccess.UoW;
 using Microsoft.EntityFrameworkCore;
-using Model.Dtos.Blog_;
-using Model.Dtos.BlogLike_;
+using Model.Dtos.Blog.Queries;
+using Model.Dtos.BlogLike.Commands;
+using Model.Dtos.BlogLike.Queries;
 using Model.Entities;
 using System.Linq.Expressions;
 
 namespace Business.Concrete;
 
-[ExceptionHandler]
 public class BlogLikeService : ServiceBase<BlogLike, IBlogLikeRepository>, IBlogLikeService
 {
-    public BlogLikeService(IBlogLikeRepository blogLikeRepository, IMapper mapper) : base(blogLikeRepository, mapper)
+    public BlogLikeService(IUnitOfWork unitOfWork, IValidationService validationService, IMapper mapper) : base(unitOfWork.BlogLikes, validationService, mapper)
     {
     }
 
-    #region Get Entity
-    public async Task<BlogLike?> GetAsync(Expression<Func<BlogLike, bool>> where, CancellationToken cancellationToken = default)
+    #region Get
+    public async Task<Result<BlogLike>> GetAsync(Expression<Func<BlogLike, bool>> where, CancellationToken cancellationToken = default)
     {
-        var result = await _GetAsync(
+        var result = await base.GetAsync(
             where: where,
-            tracking: false,
             cancellationToken: cancellationToken
         );
-
         return result;
     }
 
-    public async Task<ICollection<BlogLike>?> GetListAsync(Expression<Func<BlogLike, bool>>? where = null, CancellationToken cancellationToken = default)
+    public async Task<Result<BlogLike>> GetAsync(Guid BlogId, Guid UserId, CancellationToken cancellationToken = default)
     {
-        var result = await _GetListAsync(
-             where: where,
-             tracking: false,
-             cancellationToken: cancellationToken
-         );
+        var result = await base.GetAsync(
+            where: f => f.BlogId == BlogId && f.UserId == UserId,
+            include: i => i.Include(x => x.User),
+            cancellationToken: cancellationToken
+        );
+        return result;
+    }
 
+    public async Task<Result<BlogLikeResponseDto>> GetBasicAsync(Guid BlogId, Guid UserId, CancellationToken cancellationToken = default)
+    {
+        var result = await base.GetAsync<BlogLikeResponseDto>(
+            where: f => f.BlogId == BlogId && f.UserId == UserId,
+            include: i => i.Include(x => x.User),
+            cancellationToken: cancellationToken
+        );
+        return result;
+    }
+
+    public async Task<Result<BlogLikeListResponseDto>> GetDetailAsync(Guid BlogId, Guid UserId, CancellationToken cancellationToken = default)
+    {
+        var result = await base.GetAsync<BlogLikeListResponseDto>(
+            where: f => f.BlogId == BlogId && f.UserId == UserId,
+            include: i => i
+                .Include(x => x.Blog)
+                .Include(x => x.User),
+            cancellationToken: cancellationToken
+        );
         return result;
     }
     #endregion
 
-    #region Get Generic
-    public async Task<TResponse?> GetAsync<TResponse>(Expression<Func<BlogLike, bool>> where, CancellationToken cancellationToken = default) where TResponse : IDto
+    #region GetList 
+    public async Task<Result<ICollection<BlogLike>>> GetListAsync(Expression<Func<BlogLike, bool>>? where = null, CancellationToken cancellationToken = default)
     {
-        var result = await _GetAsync<TResponse>(
+        var result = await base.GetListAsync(
             where: where,
-            tracking: false,
             cancellationToken: cancellationToken
         );
-
         return result;
     }
 
-    public async Task<ICollection<TResponse>?> GetListAsync<TResponse>(Expression<Func<BlogLike, bool>>? where = null, CancellationToken cancellationToken = default) where TResponse : IDto
+    public async Task<Result<ICollection<BlogLike>>> GetListAsync(DynamicRequest? request, CancellationToken cancellationToken = default)
     {
-        var result = await _GetListAsync<TResponse>(
-            where: where,
+        var result = await base.GetListAsync(
+            filter: request?.Filter,
+            sorts: request?.Sorts,
+            include: i => i.Include(x => x.User),
             tracking: false,
             cancellationToken: cancellationToken
         );
+        return result;
+    }
 
+    public async Task<Result<ICollection<BlogLikeResponseDto>>> GetBasicListAsync(DynamicRequest? request, CancellationToken cancellationToken = default)
+    {
+        var result = await base.GetListAsync<BlogLikeResponseDto>(
+            filter: request?.Filter,
+            sorts: request?.Sorts,
+            include: i => i.Include(x => x.User),
+            cancellationToken: cancellationToken
+        );
+        return result;
+    }
+
+    public async Task<Result<ICollection<BlogLikeListResponseDto>>> GetDetailListAsync(DynamicRequest? request, CancellationToken cancellationToken = default)
+    {
+        var result = await base.GetListAsync<BlogLikeListResponseDto>(
+            filter: request?.Filter,
+            sorts: request?.Sorts,
+            include: i => i
+                .Include(x => x.Blog)
+                .Include(x => x.User),
+            cancellationToken: cancellationToken
+        );
         return result;
     }
     #endregion
@@ -75,188 +117,58 @@ public class BlogLikeService : ServiceBase<BlogLike, IBlogLikeRepository>, IBlog
     // Multiple Primary Key...
     #endregion
 
-    #region Get
-    public async Task<BlogLike?> GetAsync(Guid BlogId, Guid UserId, CancellationToken cancellationToken = default)
-    {
-        if (BlogId == default) throw new ArgumentNullException(nameof(BlogId));
-        if (UserId == default) throw new ArgumentNullException(nameof(UserId));
-
-        var result = await _GetAsync(
-            where: f => f.BlogId == BlogId && f.UserId == UserId,
-            include: i => i.Include(x => x.User),
-            tracking: false,
-            cancellationToken: cancellationToken
-        );
-
-        return result;
-    }
-
-    public async Task<ICollection<BlogLike>?> GetAllAsync(DynamicRequest? request, CancellationToken cancellationToken = default)
-    {
-        var result = await _GetListAsync(
-            filter: request?.Filter,
-            sorts: request?.Sorts,
-            include: i => i.Include(x => x.User),
-            tracking: false,
-            cancellationToken: cancellationToken
-        );
-
-        return result;
-    }
-
-    public async Task<PaginationResponse<BlogLike>> GetListAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
-    {
-        var result = await _PaginationAsync(
-            paginationRequest: request.PaginationRequest,
-            filter: request.Filter,
-            sorts: request.Sorts,
-            include: i => i.Include(x => x.User),
-            cancellationToken: cancellationToken
-        );
-
-        return result;
-    }
-    #endregion
-
-    #region GetBasic
-    public async Task<BlogLikeResponseDto?> GetByBasicAsync(Guid BlogId, Guid UserId, CancellationToken cancellationToken = default)
-    {
-        if (BlogId == default) throw new ArgumentNullException(nameof(BlogId));
-        if (UserId == default) throw new ArgumentNullException(nameof(UserId));
-
-        var result = await _GetAsync<BlogLikeResponseDto>(
-            where: f => f.BlogId == BlogId && f.UserId == UserId,
-            include: i => i.Include(x => x.User),
-            tracking: false,
-            cancellationToken: cancellationToken
-        );
-
-        return result;
-    }
-
-    public async Task<ICollection<BlogLikeResponseDto>?> GetAllByBasicAsync(DynamicRequest? request, CancellationToken cancellationToken = default)
-    {
-        var result = await _GetListAsync<BlogLikeResponseDto>(
-            filter: request?.Filter,
-            sorts: request?.Sorts,
-            include: i => i.Include(x => x.User),
-            tracking: false,
-            cancellationToken: cancellationToken
-        );
-
-        return result;
-    }
-
-    public async Task<PaginationResponse<BlogLikeResponseDto>> GetListByBasicAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
-    {
-        var result = await _PaginationAsync<BlogLikeResponseDto>(
-            paginationRequest: request.PaginationRequest,
-            filter: request.Filter,
-            sorts: request.Sorts,
-            include: i => i.Include(x => x.User),
-            cancellationToken: cancellationToken
-        );
-
-        return result;
-    }
-    #endregion
-
-    #region GetDetail
-    public async Task<BlogLikeListResponseDto?> GetByDetailAsync(Guid BlogId, Guid UserId, CancellationToken cancellationToken = default)
-    {
-        if (BlogId == default) throw new ArgumentNullException(nameof(BlogId));
-        if (UserId == default) throw new ArgumentNullException(nameof(UserId));
-
-        var result = await _GetAsync<BlogLikeListResponseDto>(
-            where: f => f.BlogId == BlogId && f.UserId == UserId,
-            include: i => i
-                .Include(x => x.Blog)
-                .Include(x => x.User),
-            tracking: false,
-            cancellationToken: cancellationToken
-        );
-
-        return result;
-    }
-
-    public async Task<ICollection<BlogLikeListResponseDto>?> GetAllByDetailAsync(DynamicRequest? request, CancellationToken cancellationToken = default)
-    {
-        var result = await _GetListAsync<BlogLikeListResponseDto>(
-            filter: request?.Filter,
-            sorts: request?.Sorts,
-            include: i => i
-                .Include(x => x.Blog)
-                .Include(x => x.User),
-            tracking: false,
-            cancellationToken: cancellationToken
-        );
-
-        return result;
-    }
-
-    public async Task<PaginationResponse<BlogLikeListResponseDto>> GetListByDetailAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
-    {
-        var result = await _PaginationAsync<BlogLikeListResponseDto>(
-            paginationRequest: request.PaginationRequest,
-            filter: request.Filter,
-            sorts: request.Sorts,
-            include: i => i
-                .Include(x => x.Blog)
-                .Include(x => x.User),
-            cancellationToken: cancellationToken
-        );
-
-        return result;
-    }
-    #endregion
-
     #region Create
-    [Validation(typeof(BlogLikeCreateDto))]
-    public async Task<BlogLikeResponseDto> CreateAsync(BlogLikeCreateDto request, CancellationToken cancellationToken = default)
+    public async Task<Result<BlogLikeResponseDto>> CreateAsync(BlogLikeCreateDto request, CancellationToken cancellationToken = default)
     {
-        var result = await _AddAsync<BlogLikeCreateDto, BlogLikeResponseDto>(request, cancellationToken);
-
+        var result = await base.CreateAsync<BlogLikeCreateDto, BlogLikeResponseDto>(request, cancellationToken);
         return result;
     }
     #endregion
 
     #region Update
-    [Validation(typeof(BlogLike))]
-    public async Task<BlogLikeResponseDto> UpdateAsync(BlogLike request, CancellationToken cancellationToken = default)
+    public async Task<Result<BlogLikeResponseDto>> UpdateAsync(BlogLike request, CancellationToken cancellationToken = default)
     {
-        var result = await _UpdateAsync<BlogLikeResponseDto>(request, where: f => f.UserId == request.UserId && f.BlogId == request.BlogId, cancellationToken);
-
+        // where: f => f.UserId == request.UserId && f.BlogId == request.BlogId, 
+        var result = await base.UpdateAsync<BlogLikeResponseDto>(request, cancellationToken);
         return result;
     }
     #endregion
 
-    #region Delete
-    public async Task DeleteAsync(BlogLikeDeleteDto request, CancellationToken cancellationToken = default)
+    #region Delete 
+    public async Task<Result> DeleteAsync(BlogLikeDeleteDto request, CancellationToken cancellationToken = default)
     {
-        await _DeleteAsync(where: f => f.BlogId == request.BlogId && f.UserId == request.UserId, cancellationToken);
+        var result = await base.DeleteAsync(where: f => f.BlogId == request.BlogId && f.UserId == request.UserId, cancellationToken);
+        return result;
+    }
+    #endregion
+
+    #region Pagination
+    public async Task<Result<PaginationResponse<BlogLike>>> PaginationAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
+    {
+        var result = await base.PaginationAsync(
+            paginationRequest: request,
+            cancellationToken: cancellationToken
+        );
+        return result;
     }
     #endregion
 
     #region Datatable Methods
-    public async Task<DatatableResponseClientSide<BlogLike>> DatatableClientSideAsync(DynamicRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<DatatableResponseClientSide<BlogLike>>> DatatableClientSideAsync(DynamicDatatableRequest request, CancellationToken cancellationToken = default)
     {
-        var result = await _DatatableClientSideAsync(
-            filter: request.Filter,
-            sorts: request.Sorts,
+        var result = await base.DatatableClientSideAsync(
+            datatableRequest: request,
             cancellationToken: cancellationToken
         );
-
         return result;
     }
 
-    public async Task<DatatableResponseServerSide<BlogLike>> DatatableServerSideAsync(DynamicDatatableServerSideRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<DatatableResponseServerSide<BlogLike>>> DatatableServerSideAsync(DynamicDatatableRequest request, CancellationToken cancellationToken = default)
     {
-        var result = await _DatatableServerSideAsync(
-            datatableRequest: request.GetDatatableRequest(),
-            filter: request.Filter,
+        var result = await base.DatatableServerSideAsync(
+            datatableRequest: request,
             cancellationToken: cancellationToken
         );
-
         return result;
     }
     #endregion

@@ -1,65 +1,57 @@
-﻿using Business.ServiceBase;
-using Core.BaseRequestModels;
-using Core.Model;
+﻿using Core.BaseRequestModels;
 using Core.Utils.Datatable;
 using Core.Utils.Pagination;
+using Core.Utils.ResultPattern;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Model.Dtos.Blog_;
+using Model.Dtos.Blog.Commands;
+using Model.Dtos.Blog.Queries;
 using Model.Entities;
 using System.Linq.Expressions;
 
 namespace Business.Abstract;
 
-public interface IBlogService : IServiceBase<Blog>, IServiceBaseAsync<Blog>
+public interface IBlogService
 {
-    #region Get Entity
-    Task<Blog?> GetAsync(Expression<Func<Blog, bool>> where, CancellationToken cancellationToken = default);
-    Task<ICollection<Blog>?> GetListAsync(Expression<Func<Blog, bool>>? where = default, CancellationToken cancellationToken = default);
+    #region Get
+    Task<Result<Blog>> GetAsync(Expression<Func<Blog, bool>> where, CancellationToken cancellationToken = default);
+    Task<Result<Blog>> GetAsync(Guid Id, CancellationToken cancellationToken = default);
+    Task<Result<BlogBasicResponseDto>> GetBasicAsync(Guid Id, CancellationToken cancellationToken = default);
+    Task<Result<BlogDetailResponseDto>> GetDetailAsync(Guid Id, CancellationToken cancellationToken = default);
+    Task<Result<BlogLikeListResponseDto>> GetBlogLikeListResponseDtoAsync(Guid id, CancellationToken cancellationToken = default);
     #endregion
 
-    #region Get Generic
-    Task<TResponse?> GetAsync<TResponse>(Expression<Func<Blog, bool>> where, CancellationToken cancellationToken = default) where TResponse : IDto;
-    Task<ICollection<TResponse>?> GetListAsync<TResponse>(Expression<Func<Blog, bool>>? where = default, CancellationToken cancellationToken = default) where TResponse : IDto;
+    #region GetList
+    Task<Result<ICollection<Blog>>> GetListAsync(Expression<Func<Blog, bool>>? where = null, CancellationToken cancellationToken = default);
+    Task<Result<ICollection<Blog>>> GetListAsync(DynamicRequest? request, CancellationToken cancellationToken = default);
+    Task<Result<ICollection<BlogBasicResponseDto>>> GetBasicListAsync(DynamicRequest? request, CancellationToken cancellationToken = default);
+    Task<Result<ICollection<BlogLikeListResponseDto>>> GetBlogLikeListResponseDtoListAsync(DynamicRequest? request, CancellationToken cancellationToken = default);
+    Task<Result<ICollection<BlogDetailResponseDto>>> GetDetailListAsync(DynamicRequest? request, CancellationToken cancellationToken = default);
     #endregion
 
     #region SelectList
-    Task<SelectList> GetSelectListAsync(Expression<Func<Blog, bool>>? where = default, CancellationToken cancellationToken = default);
-    #endregion
-
-    #region Get
-    Task<Blog?> GetAsync(Guid Id, CancellationToken cancellationToken = default);
-    Task<ICollection<Blog>?> GetAllAsync(DynamicRequest? request, CancellationToken cancellationToken = default);
-    Task<PaginationResponse<Blog>> GetListAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default);
-    #endregion
-
-    #region GetBasic
-    Task<BlogBasicResponseDto?> GetByBasicAsync(Guid Id, CancellationToken cancellationToken = default);
-    Task<ICollection<BlogBasicResponseDto>?> GetAllByBasicAsync(DynamicRequest? request, CancellationToken cancellationToken = default);
-    Task<PaginationResponse<BlogBasicResponseDto>> GetListByBasicAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default);
-    #endregion
-
-    #region GetDetail
-    Task<BlogDetailResponseDto?> GetByDetailAsync(Guid Id, CancellationToken cancellationToken = default);
-    Task<ICollection<BlogDetailResponseDto>?> GetAllByDetailAsync(DynamicRequest? request, CancellationToken cancellationToken = default);
-    Task<PaginationResponse<BlogDetailResponseDto>> GetListByDetailAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default);
+    Task<Result<SelectList>> SelectListAsync(Expression<Func<Blog, bool>>? where = null, CancellationToken cancellationToken = default);
     #endregion
 
     #region Create
-    Task<BlogBasicResponseDto> CreateAsync(BlogCreateDto request, CancellationToken cancellationToken = default);
+    Task<Result<BlogBasicResponseDto>> CreateAsync(BlogCreateDto request, CancellationToken cancellationToken = default);
     #endregion
 
     #region Update
-    Task<BlogBasicResponseDto> UpdateAsync(BlogUpdateDto request, CancellationToken cancellationToken = default);
+    Task<Result<BlogBasicResponseDto>> UpdateAsync(BlogUpdateDto request, CancellationToken cancellationToken = default);
     #endregion
 
     #region Delete
-    Task DeleteAsync(Guid Id, CancellationToken cancellationToken = default);
+    Task<Result> DeleteAsync(Guid Id, CancellationToken cancellationToken = default);
+    Task<Result> UndoDeleteAsync(Guid Id, CancellationToken cancellationToken = default);
     #endregion
 
-    #region Datatable Methods
-    Task<DatatableResponseClientSide<Blog>> DatatableClientSideAsync(DynamicRequest request, CancellationToken cancellationToken = default);
-    Task<DatatableResponseClientSide<BlogReportDto>> DatatableClientSideByReportAsync(DynamicRequest request, CancellationToken cancellationToken = default);
-    Task<DatatableResponseServerSide<Blog>> DatatableServerSideAsync(DynamicDatatableServerSideRequest request, CancellationToken cancellationToken = default);
-    Task<DatatableResponseServerSide<BlogReportDto>> DatatableServerSideByReportAsync(DynamicDatatableServerSideRequest request, CancellationToken cancellationToken = default);
+    #region Pagination
+    Task<Result<PaginationResponse<Blog>>> PaginationAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default);
+    Task<Result<PaginationResponse<BlogReportDto>>> PaginationReportAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default);
+    #endregion
+
+    #region Datatable
+    Task<Result<DatatableResponseClientSide<BlogReportDto>>> DatatableClientSideAsync(DynamicDatatableRequest request, CancellationToken cancellationToken = default);
+    Task<Result<DatatableResponseServerSide<BlogReportDto>>> DatatableServerSideAsync(DynamicDatatableRequest request, CancellationToken cancellationToken = default);
     #endregion
 }

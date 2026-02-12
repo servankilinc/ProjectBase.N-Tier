@@ -1,160 +1,128 @@
+using API.Controllers.Base;
 using Business.Abstract;
 using Core.BaseRequestModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Model.Dtos.BlogComment_;
+using Model.Dtos.BlogComment.Commands;
 
 namespace API.Controllers;
 
 [Authorize]
-[ApiController]
-[Route("api/[controller]")]
-public class BlogCommentController : ControllerBase
+public class BlogCommentController : BaseController
 {
     private readonly IBlogCommentService _blogCommentService;
-    public BlogCommentController(IBlogCommentService blogCommentService) => _blogCommentService = blogCommentService;
+    public BlogCommentController(ILogger<BlogCommentController> logger, IBlogCommentService blogCommentService) : base(logger) => _blogCommentService = blogCommentService;
 
-    #region GetEntity
-    [HttpGet("Get")]
+
+    #region Get
+    [HttpGet("{id:guid}")]
     public async Task<IActionResult> Get(Guid id)
     {
         var result = await _blogCommentService.GetAsync(id);
-
-        if (result == null) return NotFound();
-
-        return Ok(result);
+        return FromResult(result);
     }
 
-    [HttpPost("GetAll")]
-    public async Task<IActionResult> GetAll(DynamicRequest? request)
+    [HttpGet("{id:guid}/base")]
+    public async Task<IActionResult> GetBasic(Guid id)
     {
-        var result = await _blogCommentService.GetAllAsync(request);
-
-        if (result == null) return NotFound();
-
-        return Ok(result);
+        var result = await _blogCommentService.GetBasicAsync(id);
+        return FromResult(result);
     }
 
-    [HttpPost("GetList")]
-    public async Task<IActionResult> GetList(DynamicPaginationRequest request)
+    [HttpGet("{id:guid}/detail")]
+    public async Task<IActionResult> GetDetail(Guid id)
+    {
+        var result = await _blogCommentService.GetDetailAsync(id);
+        return FromResult(result);
+    }
+    #endregion
+
+    #region GetList
+    [HttpPost("list")]
+    public async Task<IActionResult> GetList(DynamicRequest? request)
     {
         var result = await _blogCommentService.GetListAsync(request);
-
-        if (result == null) return NotFound();
-
-        return Ok(result);
-    }
-    #endregion
-
-    #region GetBasic
-    [HttpGet("GetByBasic")]
-    public async Task<IActionResult> GetByBasic(Guid Id)
-    {
-        var result = await _blogCommentService.GetByBasicAsync(Id);
-
-        if (result == null) return NotFound();
-
-        return Ok(result);
+        return FromResult(result);
     }
 
-    [HttpPost("GetAllByBasic")]
-    public async Task<IActionResult> GetAllByBasic(DynamicRequest? request)
+    [HttpPost("list/base")]
+    public async Task<IActionResult> GetBasicList(DynamicRequest request)
     {
-        var result = await _blogCommentService.GetAllByBasicAsync(request);
-
-        if (result == null) return NotFound();
-
-        return Ok(result);
+        var result = await _blogCommentService.GetBasicListAsync(request);
+        return FromResult(result);
     }
 
-    [HttpPost("GetListByBasic")]
-    public async Task<IActionResult> GetListByBasic(DynamicPaginationRequest request)
+    [HttpPost("list/detail")]
+    public async Task<IActionResult> GetDetailList(DynamicRequest? request)
     {
-        var result = await _blogCommentService.GetListByBasicAsync(request);
-
-        if (result == null) return NotFound();
-
-        return Ok(result);
-    }
-    #endregion
-
-    #region GetDetail
-    [HttpGet("GetByDetail")]
-    public async Task<IActionResult> GetByDetail(Guid Id)
-    {
-        var result = await _blogCommentService.GetByDetailAsync(Id);
-
-        if (result == null) return NotFound();
-
-        return Ok(result);
-    }
-
-    [HttpPost("GetAllByDetail")]
-    public async Task<IActionResult> GetAllByDetail(DynamicRequest? request)
-    {
-        var result = await _blogCommentService.GetAllByDetailAsync(request);
-
-        if (result == null) return NotFound();
-
-        return Ok(result);
-    }
-
-    [HttpPost("GetListByDetail")]
-    public async Task<IActionResult> GetListByDetail(DynamicPaginationRequest request)
-    {
-        var result = await _blogCommentService.GetListByDetailAsync(request);
-
-        if (result == null) return NotFound();
-
-        return Ok(result);
+        var result = await _blogCommentService.GetDetailListAsync(request);
+        return FromResult(result);
     }
     #endregion
 
     #region Create
-    [HttpPost("Create")]
+    [HttpPost]
     public async Task<IActionResult> Create(BlogCommentCreateDto request)
     {
         var result = await _blogCommentService.CreateAsync(request);
-
-        return Ok(result);
+        return FromResult(result);
     }
     #endregion
 
     #region Update
-    [HttpPatch("Update")]
+    [HttpPut]
     public async Task<IActionResult> Update(BlogCommentUpdateDto request)
     {
         var result = await _blogCommentService.UpdateAsync(request);
-
-        return Ok(result);
+        return FromResult(result);
     }
     #endregion
 
     #region Delete
-    [HttpDelete("Delete")]
-    public async Task<IActionResult> Delete(Guid Id)
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id)
     {
-        await _blogCommentService.DeleteAsync(Id);
+        var result = await _blogCommentService.DeleteAsync(id);
+        return FromResult(result);
+    }
 
-        return Ok();
+    [HttpPatch("{id:guid}/restore")]
+    public async Task<IActionResult> Restore(Guid id)
+    {
+        var result = await _blogCommentService.UndoDeleteAsync(id);
+        return FromResult(result);
     }
     #endregion
 
-    #region Datatable Methods
-    [HttpPost("DatatableClientSide")]
-    public async Task<IActionResult> DatatableClientSide(DynamicRequest request)
+    #region Pagination
+    [HttpPost("pagination")]
+    public async Task<IActionResult> Pagination(DynamicPaginationRequest request)
     {
-        var result = await _blogCommentService.DatatableClientSideAsync(request);
-
-        return Ok(result);
+        var result = await _blogCommentService.PaginationAsync(request);
+        return FromResult(result);
     }
 
-    [HttpPost("DatatableServerSide")]
-    public async Task<IActionResult> DatatableServerSide(DynamicDatatableServerSideRequest request)
+    [HttpPost("pagination/report")]
+    public async Task<IActionResult> PaginationReport(DynamicPaginationRequest request)
+    {
+        var result = await _blogCommentService.PaginationReportAsync(request);
+        return FromResult(result);
+    }
+    #endregion
+
+    #region Datatable
+    [HttpPost("datatable/client")]
+    public async Task<IActionResult> DatatableClientSide(DynamicDatatableRequest request)
+    {
+        var result = await _blogCommentService.DatatableClientSideAsync(request);
+        return FromResult(result);
+    }
+
+    [HttpPost("datatable/server")]
+    public async Task<IActionResult> DatatableServerSide(DynamicDatatableRequest request)
     {
         var result = await _blogCommentService.DatatableServerSideAsync(request);
-
-        return Ok(result);
+        return FromResult(result);
     }
     #endregion
 }
