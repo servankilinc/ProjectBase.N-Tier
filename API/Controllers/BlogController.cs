@@ -19,28 +19,28 @@ public class BlogController : BaseController
     public async Task<IActionResult> Get(Guid id)
     {
         var result = await _blogService.GetAsync(id);
-        return FromResult(result);
+        return ToAction(result);
     }
 
     [HttpGet("{id:guid}/base")]
     public async Task<IActionResult> GetBasic(Guid id)
     {
         var result = await _blogService.GetBasicAsync(id);
-        return FromResult(result);
+        return ToAction(result);
     }
 
     [HttpGet("{id:guid}/detail")]
     public async Task<IActionResult> GetDetail(Guid id)
     {
         var result = await _blogService.GetDetailAsync(id);
-        return FromResult(result);
+        return ToAction(result);
     }
 
     [HttpGet("{id:guid}/BlogLikeListResponseDto")]
     public async Task<IActionResult> GetBlogLikeListResponseDto(Guid id)
     {
         var result = await _blogService.GetBlogLikeListResponseDtoAsync(id);
-        return FromResult(result);
+        return ToAction(result);
     }
     #endregion
 
@@ -49,28 +49,28 @@ public class BlogController : BaseController
     public async Task<IActionResult> GetList(DynamicRequest? request)
     {
         var result = await _blogService.GetListAsync(request);
-        return FromResult(result);
+        return ToAction(result);
     }
 
     [HttpPost("list/base")]
     public async Task<IActionResult> GetBasicList(DynamicRequest request)
     {
         var result = await _blogService.GetBasicListAsync(request);
-        return FromResult(result);
+        return ToAction(result);
     }
 
     [HttpPost("list/detail")]
     public async Task<IActionResult> GetDetailList(DynamicRequest? request)
     {
         var result = await _blogService.GetDetailListAsync(request);
-        return FromResult(result);
+        return ToAction(result);
     }
 
     [HttpPost("list/BlogLikeListResponseDto")]
     public async Task<IActionResult> GetBlogLikeListResponseDtoList(DynamicRequest? request)
     {
         var result = await _blogService.GetBlogLikeListResponseDtoListAsync(request);
-        return FromResult(result);
+        return ToAction(result);
     }
     #endregion
 
@@ -79,7 +79,7 @@ public class BlogController : BaseController
     public async Task<IActionResult> Create(BlogCreateDto request)
     {
         var result = await _blogService.CreateAsync(request);
-        return FromResult(result);
+        return ToAction(result);
     }
     #endregion
 
@@ -88,7 +88,7 @@ public class BlogController : BaseController
     public async Task<IActionResult> Update(BlogUpdateDto request)
     {
         var result = await _blogService.UpdateAsync(request);
-        return FromResult(result);
+        return ToAction(result);
     }
     #endregion
 
@@ -97,14 +97,14 @@ public class BlogController : BaseController
     public async Task<IActionResult> Delete(Guid id)
     {
         var result = await _blogService.DeleteAsync(id);
-        return FromResult(result);
+        return ToAction(result);
     }
 
     [HttpPatch("{id:guid}/restore")]
     public async Task<IActionResult> Restore(Guid id)
     {
         var result = await _blogService.UndoDeleteAsync(id);
-        return FromResult(result);
+        return ToAction(result);
     }
     #endregion
 
@@ -113,14 +113,14 @@ public class BlogController : BaseController
     public async Task<IActionResult> Pagination(DynamicPaginationRequest request)
     {
         var result = await _blogService.PaginationAsync(request);
-        return FromResult(result);
+        return ToAction(result);
     }
 
     [HttpPost("pagination/report")]
     public async Task<IActionResult> PaginationReport(DynamicPaginationRequest request)
     {
         var result = await _blogService.PaginationReportAsync(request);
-        return FromResult(result);
+        return ToAction(result);
     }
     #endregion
 
@@ -129,14 +129,14 @@ public class BlogController : BaseController
     public async Task<IActionResult> DatatableClientSide(DynamicDatatableRequest request)
     {
         var result = await _blogService.DatatableClientSideAsync(request);
-        return FromResult(result);
+        return ToAction(result);
     }
 
     [HttpPost("datatable/server")]
     public async Task<IActionResult> DatatableServerSide(DynamicDatatableRequest request)
     {
         var result = await _blogService.DatatableServerSideAsync(request);
-        return FromResult(result);
+        return ToAction(result);
     }
     #endregion
 }

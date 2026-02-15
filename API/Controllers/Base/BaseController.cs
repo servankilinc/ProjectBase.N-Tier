@@ -12,7 +12,8 @@ public class BaseController : ControllerBase
     private readonly ILogger _logger;
     public BaseController(ILogger logger) => _logger = logger;
 
-    protected IActionResult FromResult(Result result)
+
+    protected IActionResult ToAction(Result result)
     {
         if (result.IsSuccess)
             return Ok();
@@ -26,7 +27,7 @@ public class BaseController : ControllerBase
         };
     }
 
-    protected IActionResult FromResult<TData>(Result<TData> result)
+    protected IActionResult ToAction<TData>(Result<TData> result)
     {
         if (result.IsSuccess)
             return Ok(result.Data);

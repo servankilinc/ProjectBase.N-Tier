@@ -13,7 +13,6 @@ using Serilog;
 using Serilog.Events;
 using System.Threading.RateLimiting;
 using WebUI.ExceptionHandler;
-using WebUI.Utils.ActionFilters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -115,7 +114,6 @@ builder.Services.ConfigureApplicationCookie(options =>
 #endregion
 
 
-
 #region ------- ForwardedHeaders -------
 // This middleware extracts the original values of the client request forwarded by the proxy and makes them available to you as first-hand values of the Request object
 // so you don't need to directly access HTTP requests to extract the values of X-Forwarded-* headers
@@ -136,9 +134,10 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 var app = builder.Build();
 
-
-#region ------- Exception Handle Middleware -------
+#region ------- Exception Handler -------
 app.UseMiddleware<ExceptionHandleMiddleware>();
+app.UseExceptionHandler("/Error/InternalServer");
+app.UseStatusCodePagesWithReExecute("/error/{0}");
 #endregion
 
 app.UseStaticFiles();
@@ -146,7 +145,6 @@ app.UseStaticFiles();
 
 if (app.Environment.IsDevelopment())
 {
-
     #region ------- ForwardedHeaders -------
     //forwardedHeadersOptions.KnownNetworks.Clear();
     //forwardedHeadersOptions.KnownProxies.Clear(); 
@@ -154,8 +152,6 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseExceptionHandler("/Home/InvalidProcess");
-
     app.UseHsts();
 
     // ------- ForwardedHeaders -------
@@ -195,8 +191,6 @@ app.UseRequestLocalization(requestLocalizationOptions);
 #endregion
 
 
-app.UseStatusCodePagesWithReExecute("/Error/NotFound");
-
 app.UseHttpsRedirection();
 
 app.UseCors("policy_cors");
@@ -215,6 +209,5 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets()
     .RequireRateLimiting("policy_rate_limiter");
-
 
 app.Run();

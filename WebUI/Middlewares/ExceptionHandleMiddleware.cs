@@ -38,7 +38,7 @@ public class ExceptionHandleMiddleware
 
         var traceId = httpContext.TraceIdentifier;
         _logger.LogError(exception, "An error occurred during the process. TraceId: {TraceId}, Message: {Message}, InnerException: {InnerException}", traceId, exception.Message, exception.InnerException?.Message ?? string.Empty);
-        httpContext.Response.Redirect("/Error/InternalServer");
+        httpContext.Response.Redirect("/error/500");
     }
 
     private async Task CatchJsonExceptionAsync(HttpContext httpContext, Exception exception)

@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Localization;
+﻿using Core.Utils;
+using Core.Utils.Localization;
+using Microsoft.AspNetCore.Localization;
 using System.Text;
 
 namespace WebUI.Utils.Extensions;
@@ -66,8 +68,8 @@ public static class HttpContextExtensions
 
     public static string GetCurrentLanguage(this HttpContext httpContext)
     {
-        string defaultCulture = "tr-TR";
-        if (httpContext == null) return defaultCulture;
+        var localizationSettings = httpContext.RequestServices.GetRequiredService<LocalizationSettings>();
+        string defaultCulture = localizationSettings?.DefaultLanguage.GetDescription() ?? "en-US";
 
         var cookieName = CookieRequestCultureProvider.DefaultCookieName;
         var cookieValue = httpContext.Request.Cookies[cookieName];

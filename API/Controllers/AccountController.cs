@@ -20,7 +20,7 @@ public class AccountController : BaseController
     {
         var result = await _authService.LoginAsync(request);
 
-        return FromResult(result);
+        return ToAction(result);
     }
 
     [HttpPost("SignUp")]
@@ -28,7 +28,7 @@ public class AccountController : BaseController
     {
         var result = await _authService.SignUpAsync(request);
 
-        return FromResult(result);
+        return ToAction(result);
     }
 
     [HttpPost("RefreshAuth")]
@@ -36,6 +36,6 @@ public class AccountController : BaseController
     {
         var result = await _authService.RefreshAuthAsync(request);
 
-        return FromResult(result);
+        return ToAction(result);
     }
 }

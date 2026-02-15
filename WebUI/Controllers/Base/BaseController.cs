@@ -1,5 +1,4 @@
-﻿using Azure;
-using Core.Enums;
+﻿using Core.Enums;
 using Core.Utils;
 using Core.Utils.ResultPattern;
 using Microsoft.AspNetCore.Mvc;
@@ -12,20 +11,16 @@ public abstract class BaseController : Controller
     public BaseController(ILogger<BaseController> logger) => _logger = logger;
 
 
-    protected IActionResult ApiResult(Result result)
+    /// <summary>
+    /// Handle result and return Json content
+    /// </summary>
+    protected IActionResult ToJsonResult(Core.Utils.ResultPattern.IResult result)
     {
         if (result.IsSuccess)
             return Ok();
 
         LogFailedProcess(result);
 
-        if (result.Error.ValidationFailures != null)
-        {
-            foreach (var failure in result.Error.ValidationFailures)
-                foreach (var errorMessage in failure.Value)
-                    ModelState.AddModelError(failure.Key, errorMessage);
-        }
-
         var problemDetails = result.GetProblemDetail();
         return new ObjectResult(problemDetails)
         {
@@ -33,48 +28,36 @@ public abstract class BaseController : Controller
         };
     }
 
-    protected IActionResult ApiResult<TData>(Result<TData> result)
-    {
-        if (result.IsSuccess)
-            return Ok(result.Data);
 
-        LogFailedProcess(result);
-
-        if (result.Error.ValidationFailures != null)
-        {
-            foreach (var failure in result.Error.ValidationFailures)
-                foreach (var errorMessage in failure.Value)
-                    ModelState.AddModelError(failure.Key, errorMessage);
-        }
-
-        var problemDetails = result.GetProblemDetail();
-        return new ObjectResult(problemDetails)
-        {
-            StatusCode = problemDetails.Status
-        };
-    }
-
-    protected IActionResult ErrorView(Result result)
+    /// <summary>
+    /// Handle result and return error view
+    /// </summary>
+    protected IActionResult ToErrorView(Result result)
     {
         if (result.IsSuccess)
             return RedirectToAction("Index", "Home");
 
         LogFailedProcess(result);
 
-        // ValidationRuleException => response.Redirect("/Error/InvalidProcess")
-        // BusinessException => response.Redirect("/Error/InvalidProcess")
-        // GeneralException => response.Redirect("/Error/InternalServer")
-        // DataAccessException => response.Redirect("/Error/InternalServer")
-        // 404 => response.Redirect("/Error/NotFound")
-        // others => response.Redirect("/Error/InternalServer")
         return result.Error.Type switch
         {
-            ErrorType.Failure => RedirectToAction("InvalidProcess", "Error"),
-            ErrorType.NotFound => RedirectToAction("NotFound", "Error"),
-            ErrorType.Validation => RedirectToAction("InvalidProcess", "Error"),
-            ErrorType.Forbidden => RedirectToAction("Forbidden", "Error"),
-            _ => RedirectToAction("InternalServer", "Error"),
+            ErrorType.NotFound => NotFound(),
+            ErrorType.Forbidden => Forbid(),
+            ErrorType.Validation => BadRequest(result.Message),
+            ErrorType.Failure => BadRequest(result.Message),
+            _ => StatusCode(500)
         };
+    }
+
+
+    protected void AddValidationFailuresToModel(Core.Utils.ResultPattern.IResult result)
+    {
+        if (result.Error?.Type == ErrorType.Validation && result.Error.ValidationFailures != null)
+        {
+            foreach (var failure in result.Error.ValidationFailures)
+                foreach (var errorMessage in failure.Value)
+                    ModelState.AddModelError(failure.Key, errorMessage);
+        }
     }
 
 

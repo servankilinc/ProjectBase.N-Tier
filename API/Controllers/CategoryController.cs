@@ -18,21 +18,21 @@ public class CategoryController : BaseController
     public async Task<IActionResult> Get(Guid id)
     {
         var result = await _categoryService.GetAsync(id);
-        return FromResult(result);
+        return ToAction(result);
     }
 
     [HttpGet("{id:guid}/base")]
     public async Task<IActionResult> GetBasic(Guid id)
     {
         var result = await _categoryService.GetBasicAsync(id);
-        return FromResult(result);
+        return ToAction(result);
     }
 
     [HttpGet("{id:guid}/detail")]
     public async Task<IActionResult> GetDetail(Guid id)
     {
         var result = await _categoryService.GetDetailAsync(id);
-        return FromResult(result);
+        return ToAction(result);
     }
     #endregion
 
@@ -41,21 +41,21 @@ public class CategoryController : BaseController
     public async Task<IActionResult> GetList(DynamicRequest? request)
     {
         var result = await _categoryService.GetListAsync(request);
-        return FromResult(result);
+        return ToAction(result);
     }
 
     [HttpPost("list/base")]
     public async Task<IActionResult> GetBasicList(DynamicRequest request)
     {
         var result = await _categoryService.GetBasicListAsync(request);
-        return FromResult(result);
+        return ToAction(result);
     }
 
     [HttpPost("list/detail")]
     public async Task<IActionResult> GetDetailList(DynamicRequest? request)
     {
         var result = await _categoryService.GetDetailListAsync(request);
-        return FromResult(result);
+        return ToAction(result);
     }
     #endregion
 
@@ -64,7 +64,7 @@ public class CategoryController : BaseController
     public async Task<IActionResult> Create(CategoryCreateDto request)
     {
         var result = await _categoryService.CreateAsync(request);
-        return FromResult(result);
+        return ToAction(result);
     }
     #endregion
 
@@ -73,7 +73,7 @@ public class CategoryController : BaseController
     public async Task<IActionResult> Update(CategoryUpdateDto request)
     {
         var result = await _categoryService.UpdateAsync(request);
-        return FromResult(result);
+        return ToAction(result);
     }
     #endregion
 
@@ -82,14 +82,14 @@ public class CategoryController : BaseController
     public async Task<IActionResult> Delete(Guid id)
     {
         var result = await _categoryService.DeleteAsync(id);
-        return FromResult(result);
+        return ToAction(result);
     }
 
     [HttpPatch("{id:guid}/restore")]
     public async Task<IActionResult> Restore(Guid id)
     {
         var result = await _categoryService.UndoDeleteAsync(id);
-        return FromResult(result);
+        return ToAction(result);
     }
     #endregion
 
@@ -98,14 +98,14 @@ public class CategoryController : BaseController
     public async Task<IActionResult> Pagination(DynamicPaginationRequest request)
     {
         var result = await _categoryService.PaginationAsync(request);
-        return FromResult(result);
+        return ToAction(result);
     }
 
     [HttpPost("pagination/report")]
     public async Task<IActionResult> PaginationReport(DynamicPaginationRequest request)
     {
         var result = await _categoryService.PaginationReportAsync(request);
-        return FromResult(result);
+        return ToAction(result);
     }
     #endregion
 
@@ -114,14 +114,14 @@ public class CategoryController : BaseController
     public async Task<IActionResult> DatatableClientSide(DynamicDatatableRequest request)
     {
         var result = await _categoryService.DatatableClientSideAsync(request);
-        return FromResult(result);
+        return ToAction(result);
     }
 
     [HttpPost("datatable/server")]
     public async Task<IActionResult> DatatableServerSide(DynamicDatatableRequest request)
     {
         var result = await _categoryService.DatatableServerSideAsync(request);
-        return FromResult(result);
+        return ToAction(result);
     }
     #endregion
 }
