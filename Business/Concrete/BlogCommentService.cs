@@ -135,6 +135,15 @@ public class BlogCommentService : ServiceBase<BlogComment, IBlogCommentRepositor
     #endregion
 
     #region Update
+    public async Task<Result<BlogCommentUpdateDto>> GetUpdateModelAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var result = await base.GetAsync<BlogCommentUpdateDto>(
+            where: f => f.Id == id,
+            cancellationToken: cancellationToken
+        );
+        return result;
+    }
+
     public async Task<Result<BlogCommentBasicResponseDto>> UpdateAsync(BlogCommentUpdateDto request, CancellationToken cancellationToken = default)
     {
         var result = await base.UpdateAsync<BlogCommentUpdateDto, BlogCommentBasicResponseDto>(updateModel: request, where: f => f.Id == request.Id, cancellationToken);

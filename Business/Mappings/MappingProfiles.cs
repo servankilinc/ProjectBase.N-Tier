@@ -9,7 +9,6 @@ using Model.Dtos.BlogLike.Queries;
 using Model.Dtos.Category.Commands;
 using Model.Dtos.Category.Queries;
 using Model.Dtos.User.Commands;
-using Model.Dtos.User.Queries;
 using Model.Entities;
 
 namespace Business.Mappings;

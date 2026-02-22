@@ -3,7 +3,7 @@ using Business.Abstract;
 using Core.BaseRequestModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Model.Dtos.User.Queries;
+using Model.Dtos.User.Commands;
 
 namespace API.Controllers;
 
@@ -83,6 +83,13 @@ public class UserController : BaseController
     #endregion
 
     #region Update
+    [HttpGet]
+    public async Task<IActionResult> Update(Guid id)
+    {
+        var result = await _userService.GetUpdateModelAsync(id);
+        return ToAction(result);
+    }
+
     [HttpPut]
     public async Task<IActionResult> Update(UserUpdateDto request)
     {

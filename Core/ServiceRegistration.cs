@@ -113,7 +113,7 @@ public static class ServiceRegistration
         #endregion
 
         #region VALIDATION
-        services.AddSingleton<IValidationService, ValidationService>(); 
+        services.AddScoped<IValidationService, ValidationService>(); 
         #endregion
 
         return services;

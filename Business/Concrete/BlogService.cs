@@ -169,6 +169,15 @@ public class BlogService : ServiceBase<Blog, IBlogRepository>, IBlogService
     #endregion
 
     #region Update
+    public async Task<Result<BlogUpdateDto>> GetUpdateModelAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var result = await base.GetAsync<BlogUpdateDto>(
+            where: f => f.Id == id,
+            cancellationToken: cancellationToken
+        );
+        return result;
+    }
+
     public async Task<Result<BlogBasicResponseDto>> UpdateAsync(BlogUpdateDto request, CancellationToken cancellationToken = default)
     {
         var result = await base.UpdateAsync<BlogUpdateDto, BlogBasicResponseDto>(updateModel: request, where: f => f.Id == request.Id, cancellationToken);

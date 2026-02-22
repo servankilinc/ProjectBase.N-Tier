@@ -5,13 +5,14 @@ using Core;
 using Core.Utils.Auth;
 using DataAccess;
 using DataAccess.Contexts;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
-using Model;
 using Model.Entities;
 using Scalar.AspNetCore;
+using System.Reflection;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -110,6 +111,16 @@ builder.Services
             IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(tokenSettings.SecurityKey))
         };
     });
+#endregion
+
+
+#region ------- AutoMapper -------
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+#endregion
+
+
+#region ------- FluentValidation -------
+builder.Services.AddValidatorsFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
 #endregion
 
 

@@ -61,7 +61,7 @@ public static class GlobalExtensions
 
         var problemDetail = new ProblemDetails
         {
-            Type = $"http://domain.com/problems/{result.Error.Type}",
+            Type = $"problems/{result.Error.Type}",
             Status = result.Error.Type.GetHttpStatusCode(),
             Title = result.Message,
             Detail = string.Empty, //result.Error.Description,

@@ -69,6 +69,13 @@ public class CategoryController : BaseController
     #endregion
 
     #region Update
+    [HttpGet]
+    public async Task<IActionResult> Update(Guid id)
+    {
+        var result = await _categoryService.GetUpdateModelAsync(id);
+        return ToAction(result);
+    }
+
     [HttpPut]
     public async Task<IActionResult> Update(CategoryUpdateDto request)
     {

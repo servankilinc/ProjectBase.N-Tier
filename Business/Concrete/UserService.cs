@@ -10,8 +10,8 @@ using DataAccess.Abstract;
 using DataAccess.UoW;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Model.Dtos.Category.Commands;
 using Model.Dtos.User.Commands;
-using Model.Dtos.User.Queries;
 using Model.Entities;
 using System.Linq.Expressions;
 
@@ -167,6 +167,14 @@ public class UserService : ServiceBase<User, IUserRepository>, IUserService
     #endregion
 
     #region Update
+    public async Task<Result<UserUpdateDto>> GetUpdateModelAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var result = await base.GetAsync<UserUpdateDto>(
+            where: f => f.Id == id,
+            cancellationToken: cancellationToken
+        );
+        return result;
+    }
     public async Task<Result<UserBasicResponseDto>> UpdateAsync(UserUpdateDto request, CancellationToken cancellationToken = default)
     {
         var result = await base.UpdateAsync<UserUpdateDto, UserBasicResponseDto>(updateModel: request, where: f => f.Id == request.Id, cancellationToken);

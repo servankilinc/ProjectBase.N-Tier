@@ -1,8 +1,10 @@
-﻿using FluentValidation;
+﻿using AutoMapper;
+using FluentValidation;
+using Model.Entities;
 
 namespace WebUI.Models.Auth;
 
-public abstract class SignUpRequest
+public class SignUpRequest
 {
     public string Email { get; set; } = null!;
     public string Password { get; set; } = null!;
@@ -21,5 +23,17 @@ public class SignUpRequestValidator : AbstractValidator<SignUpRequest>
 
         RuleFor(b => b.FirstName).NotNull().MinimumLength(2).NotEmpty();
         RuleFor(b => b.LastName).NotNull().MinimumLength(2).NotEmpty().NotEqual(s => s.FirstName);
+    }
+}
+
+public class SignUpRequestMappingProfile : Profile
+{
+    public SignUpRequestMappingProfile()
+    {
+        CreateMap<SignUpRequest, User>()
+            .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
+            .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.FirstName))
+            .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => src.LastName))
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember, destMember) => !Equals(srcMember, destMember)));
     }
 }

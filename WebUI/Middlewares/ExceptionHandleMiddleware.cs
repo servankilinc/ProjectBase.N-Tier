@@ -1,4 +1,5 @@
-﻿using WebUI.Utils.Extensions;
+﻿using Core.Enums;
+using WebUI.Utils.Extensions;
 
 namespace WebUI.ExceptionHandler;
 
@@ -50,11 +51,12 @@ public class ExceptionHandleMiddleware
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
         await httpContext.Response.WriteAsJsonAsync(new Microsoft.AspNetCore.Mvc.ProblemDetails()
         {
+            Type = $"problems/{ErrorType.Failure}",
             Status = StatusCodes.Status500InternalServerError,
-            Type = $"http://domain.com/problems/InternalServerError",
             Title = "An error occurred",
             Extensions =
             {
+                ["Code"] = (byte)ErrorType.Failure,
                 ["traceId"] = traceId
             }
         });

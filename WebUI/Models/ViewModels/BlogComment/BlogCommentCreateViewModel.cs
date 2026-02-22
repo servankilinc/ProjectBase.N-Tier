@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
-using Model.Dtos.BlogComment_;
+using Model.Dtos.BlogComment.Commands;
 
 namespace WebUI.Models.ViewModels.BlogComment
 {

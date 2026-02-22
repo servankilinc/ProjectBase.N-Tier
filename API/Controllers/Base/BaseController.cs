@@ -60,7 +60,7 @@ public class BaseController : ControllerBase
                 );
                 break;
             case ErrorType.Validation:
-                _logger.LogInformation("Validation error: \nMessage: {Message} \nDetail: {@Error}",
+                _logger.LogWarning("Validation error: \nMessage: {Message} \nDetail: {@Error}",
                     result.Message,
                     result.Error
                 );

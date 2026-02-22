@@ -37,6 +37,7 @@ public interface IBlogService
     #endregion
 
     #region Update
+    Task<Result<BlogUpdateDto>> GetUpdateModelAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Result<BlogBasicResponseDto>> UpdateAsync(BlogUpdateDto request, CancellationToken cancellationToken = default);
     #endregion
 

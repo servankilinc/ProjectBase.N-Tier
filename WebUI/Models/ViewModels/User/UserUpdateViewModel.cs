@@ -1,4 +1,4 @@
-﻿using Model.Dtos.User_;
+﻿using Model.Dtos.User.Commands;
 
 namespace WebUI.Models.ViewModels.User
 {

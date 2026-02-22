@@ -35,6 +35,7 @@ public interface IBlogCommentService
     #endregion
 
     #region Update
+    Task<Result<BlogCommentUpdateDto>> GetUpdateModelAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Result<BlogCommentBasicResponseDto>> UpdateAsync(BlogCommentUpdateDto request, CancellationToken cancellationToken = default);
     #endregion
 

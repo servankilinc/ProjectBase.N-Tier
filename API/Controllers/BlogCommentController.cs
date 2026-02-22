@@ -70,6 +70,13 @@ public class BlogCommentController : BaseController
     #endregion
 
     #region Update
+    [HttpGet]
+    public async Task<IActionResult> Update(Guid id)
+    {
+        var result = await _blogCommentService.GetUpdateModelAsync(id);
+        return ToAction(result);
+    }
+
     [HttpPut]
     public async Task<IActionResult> Update(BlogCommentUpdateDto request)
     {

@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\lib\fontawesome-free-6.7.2-web\" />
+    <Folder Include="Logs\" />
   </ItemGroup>
 
 </Project>

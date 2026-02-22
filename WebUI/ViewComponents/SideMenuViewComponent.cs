@@ -3,6 +3,7 @@ using WebUI.Models.UI;
 
 namespace WebUI.ViewComponents;
 
+
 public class SideMenuViewComponent : ViewComponent
 {
     public IViewComponentResult Invoke()
@@ -12,104 +13,120 @@ public class SideMenuViewComponent : ViewComponent
             new MenuItem
             {
                 Title = "Dashboard",
-                Icon = "fa-brands fa-magento",
-                Path = "/Home/Index",
-                Type = 1,
+                Icon = "<i class=\"ki-duotone ki-element-11 fs-2\"><span class=\"path1\"></span><span class=\"path2\"></span><span class=\"path3\"></span><span class=\"path4\"></span></i>",
+                Path = "/Home/Index"
             },
             new MenuItem
             {
                 Title = "Blog",
-                Icon = "fa-regular fa-folder-open",
-                Type = 0,
+                Icon = "<i class=\"fa-regular fa-folder-open\"></i>",
                 GroupName = "Pages",
                 SubMenuItems = new List<MenuItem>()
                 {
                     new MenuItem
                     {
                         Title = "Managment",
-                        Icon = "fa-regular fa-file-lines",
-                        Path = "/Blog/Index",
-                        Type = 1,
+                        Icon = "<i class=\"fa-regular fa-file-lines\"></i>",
+                        Path = "/Blog/Index"
                     },
                     new MenuItem
                     {
                         Title = "Create",
-                        Icon = "fa-solid fa-file-circle-plus",
-                        Path= "/Blog/Create",
-                        Type = 1,
-                    }
-                }
-            },
-            new MenuItem
-            {
-                Title = "User",
-                Icon = "fa-regular fa-folder-open",
-                Type = 0,
-                SubMenuItems = new List<MenuItem>()
-                {
-                    new MenuItem
-                    {
-                        Title = "Managment",
-                        Icon = "fa-regular fa-file-lines",
-                        Path = "/User/Index",
-                        Type = 1,
-                    },
-                    new MenuItem
-                    {
-                        Title = "Create",
-                        Icon = "fa-solid fa-file-circle-plus",
-                        Path= "/User/Create",
-                        Type = 1,
+                        Icon = "<i class=\"fa-solid fa-file-circle-plus\"></i>",
+                        Path= "/Blog/Create"
                     }
                 }
             },
             new MenuItem
             {
                 Title = "Category",
-                Icon = "fa-regular fa-folder-open",
-                Type = 0,
+                Icon = "<i class=\"fa-regular fa-folder-open\"></i>",
                 SubMenuItems = new List<MenuItem>()
                 {
                     new MenuItem
                     {
                         Title = "Managment",
-                        Icon = "fa-regular fa-file-lines",
-                        Path = "/Category/Index",
-                        Type = 1,
+                        Icon = "<i class=\"fa-regular fa-file-lines\"></i>",
+                        Path = "/Category/Index"
                     },
                     new MenuItem
                     {
                         Title = "Create",
-                        Icon = "fa-solid fa-file-circle-plus",
-                        Path= "/Category/Create",
-                        Type = 1,
+                        Icon = "<i class=\"fa-solid fa-file-circle-plus\"></i>",
+                        Path= "/Category/Create"
                     }
                 }
             },
             new MenuItem
             {
                 Title = "BlogComment",
-                Icon = "fa-regular fa-folder-open",
-                Type = 0,
+                Icon = "<i class=\"fa-regular fa-folder-open\"></i>",
                 SubMenuItems = new List<MenuItem>()
                 {
                     new MenuItem
                     {
                         Title = "Managment",
-                        Icon = "fa-regular fa-file-lines",
-                        Path = "/BlogComment/Index",
-                        Type = 1,
+                        Icon = "<i class=\"fa-regular fa-file-lines\"></i>",
+                        Path = "/BlogComment/Index"
                     },
                     new MenuItem
                     {
                         Title = "Create",
-                        Icon = "fa-solid fa-file-circle-plus",
-                        Path= "/BlogComment/Create",
-                        Type = 1,
+                        Icon = "<i class=\"fa-solid fa-file-circle-plus\"></i>",
+                        Path= "/BlogComment/Create"
+                    }
+                }
+            },
+            new MenuItem
+            {
+                Title = "User",
+                Icon = "<i class=\"fa-regular fa-folder-open\"></i>",
+                GroupName = "User Pages",
+                SubMenuItems = new List<MenuItem>()
+                {
+                    new MenuItem
+                    {
+                        Title = "Managment",
+                        Icon = "<i class=\"fa-regular fa-file-lines\"></i>",
+                        Path = "/User/Index"
+                    },
+                    new MenuItem
+                    {
+                        Title = "Create",
+                        Icon = "<i class=\"fa-solid fa-file-circle-plus\"></i>",
+                        Path= "/User/Create"
                     }
                 }
             },
         };
+
+        string currentPath = (HttpContext.Request.Path.Value ?? string.Empty).TrimEnd('/'); ;
+
+        foreach (var menu in menuItems)
+        {
+            HandleActiveMenu(menu, currentPath);
+        }
         return View(menuItems);
+    }
+
+
+    private bool HandleActiveMenu(MenuItem item, string currentPath)
+    {
+        bool isActive = !string.IsNullOrWhiteSpace(item.Path) && (currentPath.Equals(item.Path, StringComparison.OrdinalIgnoreCase) || currentPath.StartsWith(item.Path + "/", StringComparison.OrdinalIgnoreCase));
+        bool hasActiveChild = false;
+
+        if (item.SubMenuItems != null)
+        {
+            foreach (var child in item.SubMenuItems)
+            {
+                if (HandleActiveMenu(child, currentPath))
+                    hasActiveChild = true;
+            }
+        }
+
+        item.IsActive = isActive;
+        item.HasActiveChild = hasActiveChild;
+
+        return isActive || hasActiveChild;
     }
 }

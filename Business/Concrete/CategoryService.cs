@@ -10,6 +10,7 @@ using DataAccess.Abstract;
 using DataAccess.UoW;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Model.Dtos.Blog.Commands;
 using Model.Dtos.Category.Commands;
 using Model.Dtos.Category.Queries;
 using Model.Entities;
@@ -134,6 +135,14 @@ public class CategoryService : ServiceBase<Category, ICategoryRepository>, ICate
     #endregion
 
     #region Update
+    public async Task<Result<CategoryUpdateDto>> GetUpdateModelAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var result = await base.GetAsync<CategoryUpdateDto>(
+            where: f => f.Id == id,
+            cancellationToken: cancellationToken
+        );
+        return result;
+    }
     public async Task<Result<CategoryResponseDto>> UpdateAsync(CategoryUpdateDto request, CancellationToken cancellationToken = default)
     {
         var result = await base.UpdateAsync<CategoryUpdateDto, CategoryResponseDto>(updateModel: request, where: f => f.Id == request.Id, cancellationToken);

@@ -2,9 +2,8 @@
 using Core.BaseRequestModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Model.Dtos.Blog.Commands;
 using WebUI.Models.ViewModels.Blog;
-using WebUI.Utils.ActionFilters;
-using Model.Dtos.Blog_;
 
 namespace WebUI.Controllers;
 
@@ -14,7 +13,7 @@ public class BlogController : BaseController
     private readonly IBlogService _blogService;
     private readonly ICategoryService _categoryService;
     private readonly IUserService _userService;
-    public BlogController(IBlogService blogService, ICategoryService categoryService, IUserService userService)
+    public BlogController(ILogger<BlogController> logger, IBlogService blogService, ICategoryService categoryService, IUserService userService) : base(logger)
     {
         _blogService = blogService;
         _categoryService = categoryService;
@@ -24,11 +23,15 @@ public class BlogController : BaseController
     [HttpGet]
     public async Task<IActionResult> Index()
     {
+        var authorIds = await _userService.SelectListAsync();
+        var categoryIds = await _categoryService.SelectListAsync();
+
         var viewModel = new BlogViewModel
         {
-            AuthorIds = await _userService.GetSelectListAsync(),
-            CategoryIds = await _categoryService.GetSelectListAsync()
+            AuthorIds = authorIds.Data,
+            CategoryIds = categoryIds.Data
         };
+
         return View(viewModel);
     }
 
@@ -36,75 +39,84 @@ public class BlogController : BaseController
     [HttpGet]
     public async Task<IActionResult> Create()
     {
-        var viewModel = new BlogCreateViewModel
-        {
-            AuthorIds = await _userService.GetSelectListAsync(),
-            CategoryIds = await _categoryService.GetSelectListAsync()
-        };
-        return View(viewModel);
-    }
+        var authorIds = await _userService.SelectListAsync();
+        var categoryIds = await _categoryService.SelectListAsync();
 
-    [HttpGet]
-    public async Task<IActionResult> CreateForm()
-    {
         var viewModel = new BlogCreateViewModel
         {
-            AuthorIds = await _userService.GetSelectListAsync(),
-            CategoryIds = await _categoryService.GetSelectListAsync()
+            AuthorIds = authorIds.Data,
+            CategoryIds = categoryIds.Data
         };
+
         return PartialView("./Partials/CreateForm", viewModel);
     }
 
     [HttpPost]
-    [ServiceFilter(typeof(ValidationFilter<BlogCreateDto>))]
     public async Task<IActionResult> Create(BlogCreateDto createModel)
     {
         var result = await _blogService.CreateAsync(createModel);
-        return Ok(result);
+        return ToAction(result);
     }
     #endregion
 
     #region Update
     [HttpGet]
-    public async Task<IActionResult> UpdateForm(Guid id)
+    public async Task<IActionResult> Update(Guid id)
     {
-        var data = await _blogService.GetAsync<BlogUpdateDto>(where: f => f.Id == id);
+        var result = await _blogService.GetUpdateModelAsync(id);
+        if (!result.IsSuccess) return ToAction(result);
 
-        if (data == null) return NotFound(data);
+        var authorIds = await _userService.SelectListAsync();
+        var categoryIds = await _categoryService.SelectListAsync();
 
         var viewModel = new BlogUpdateViewModel
         {
-            UpdateModel = data,
-            AuthorIds = await _userService.GetSelectListAsync(),
-            CategoryIds = await _categoryService.GetSelectListAsync()
+            UpdateModel = result.Data,
+            AuthorIds = authorIds.Data,
+            CategoryIds = categoryIds.Data
         };
+
         return PartialView("./Partials/UpdateForm", viewModel);
     }
 
     [HttpPost]
-    [ServiceFilter(typeof(ValidationFilter<BlogUpdateDto>))]
     public async Task<IActionResult> Update(BlogUpdateDto updateModel)
     {
         var result = await _blogService.UpdateAsync(updateModel);
-        return Ok(result);
+        return ToAction(result);
     }
     #endregion
 
     #region Delete
-    [HttpDelete]
+    [HttpGet]
     public async Task<IActionResult> Delete(Guid id)
     {
-        await _blogService.DeleteAsync(id);
-        return Ok();
+        var result = await _blogService.DeleteAsync(id);
+        return ToAction(result);
+    }
+
+
+    [HttpGet]
+    public async Task<IActionResult> Restore(Guid id)
+    {
+        var result = await _blogService.UndoDeleteAsync(id);
+        return ToAction(result);
     }
     #endregion
-    
+
     #region Datatable
     [HttpPost]
-    public async Task<IActionResult> DatatableServerSide(DynamicDatatableServerSideRequest request)
+    public async Task<IActionResult> DatatableClientSide(DynamicDatatableRequest request)
     {
-        var result = await _blogService.DatatableServerSideByReportAsync(request);
-        return Ok(result);
+        var result = await _blogService.DatatableClientSideAsync(request);
+        return ToAction(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DatatableServerSide(DynamicDatatableRequest request)
+    {
+        var result = await _blogService.DatatableServerSideAsync(request);
+        return ToAction(result);
     }
     #endregion
 }

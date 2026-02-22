@@ -1,17 +1,16 @@
 ﻿using Business.Abstract;
+using Business.Concrete;
 using Core.BaseRequestModels;
-using Core.Utils.Datatable;
 using Microsoft.AspNetCore.Mvc;
-using Model.Dtos.Category_;
+using Model.Dtos.Category.Commands;
 using WebUI.Models.ViewModels.Category;
-using WebUI.Utils.ActionFilters;
 
 namespace WebUI.Controllers;
 
 public class CategoryController : BaseController
 {
     private readonly ICategoryService _categoryService;
-    public CategoryController(ICategoryService categoryService)
+    public CategoryController(ILogger<CategoryController> logger, ICategoryService categoryService) :base(logger)
     {
         _categoryService = categoryService;
     }
@@ -26,51 +25,9 @@ public class CategoryController : BaseController
         return View(viewModel);
     }
 
+    #region Create
     [HttpGet]
     public async Task<IActionResult> Create()
-    {
-        var viewModel = new CategoryCreateViewModel
-        {
-        };
-
-        return View(viewModel);
-    }
-
-    [HttpPost]
-    [ServiceFilter(typeof(ValidationFilter<CategoryCreateDto>))]
-    public async Task<IActionResult> Create(CategoryCreateDto createModel)
-    {
-        var result = await _categoryService.CreateAsync(createModel);
-        return Ok(result);
-    }
-
-    [HttpPost]
-    [ServiceFilter(typeof(ValidationFilter<CategoryUpdateDto>))]
-    public async Task<IActionResult> Update(CategoryUpdateDto updateModel)
-    {
-        var result = await _categoryService.UpdateAsync(updateModel);
-        return Ok(result);
-    }
-
-    [HttpDelete]
-    public async Task<IActionResult> Delete(Guid id)
-    {
-        await _categoryService.DeleteAsync(id);
-        return Ok();
-    }
-
-    #region Datatable
-    [HttpPost]
-    public async Task<IActionResult> DatatableServerSide(DynamicDatatableServerSideRequest request)
-    {
-        var result = await _categoryService.DatatableServerSideByReportAsync(request);
-        return Ok(result);
-    }
-    #endregion
-
-    #region Form Partials
-    [HttpGet]
-    public async Task<IActionResult> CreateForm()
     {
         var viewModel = new CategoryCreateViewModel
         {
@@ -79,18 +36,66 @@ public class CategoryController : BaseController
         return PartialView("./Partials/CreateForm", viewModel);
     }
 
-    [HttpGet]
-    public async Task<IActionResult> UpdateForm(Guid id)
+    [HttpPost]
+    public async Task<IActionResult> Create(CategoryCreateDto createModel)
     {
-        var data = await _categoryService.GetAsync<CategoryUpdateDto>(where: f => f.Id == id);
+        var result = await _categoryService.CreateAsync(createModel);
+        return ToAction(result);
+    }
+    #endregion
 
-        if (data == null) return NotFound(data);
+    #region Update
+    [HttpGet]
+    public async Task<IActionResult> Update(Guid id)
+    {
+        var result = await _categoryService.GetUpdateModelAsync(id);
+        if (!result.IsSuccess) return ToAction(result);
 
         var viewModel = new CategoryUpdateViewModel
         {
-            UpdateModel = data
+            UpdateModel = result.Data
         };
+
         return PartialView("./Partials/UpdateForm", viewModel);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Update(CategoryUpdateDto updateModel)
+    {
+        var result = await _categoryService.UpdateAsync(updateModel);
+        return ToAction(result);
+    }
+    #endregion
+
+    #region Delete
+    [HttpGet]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var result = await _categoryService.DeleteAsync(id);
+        return ToAction(result);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Restore(Guid id)
+    {
+        var result = await _categoryService.UndoDeleteAsync(id);
+        return ToAction(result);
+    }
+    #endregion
+
+    #region Datatable
+    [HttpPost]
+    public async Task<IActionResult> DatatableClientSide(DynamicDatatableRequest request)
+    {
+        var result = await _categoryService.DatatableClientSideAsync(request);
+        return ToAction(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DatatableServerSide(DynamicDatatableRequest request)
+    {
+        var result = await _categoryService.DatatableServerSideAsync(request);
+        return ToAction(result);
     }
     #endregion
 }

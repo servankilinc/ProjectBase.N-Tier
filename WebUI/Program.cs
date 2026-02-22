@@ -3,14 +3,15 @@ using Core;
 using Core.Utils.Auth;
 using DataAccess;
 using DataAccess.Contexts;
+using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
-using Model;
 using Model.Entities;
 using Serilog;
 using Serilog.Events;
+using System.Reflection;
 using System.Threading.RateLimiting;
 using WebUI.ExceptionHandler;
 
@@ -58,7 +59,6 @@ builder.Services.AddRateLimiter(options =>
 
 
 #region ------- Layer Registrations -------
-builder.Services.AddModelServices();
 builder.Services.AddCoreServices(builder);
 builder.Services.AddDataAccessServices(builder.Configuration);
 builder.Services.AddBusinessServices(builder.Configuration);
@@ -114,6 +114,16 @@ builder.Services.ConfigureApplicationCookie(options =>
 #endregion
 
 
+#region ------- AutoMapper -------
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+#endregion
+
+
+#region ------- FluentValidation -------
+builder.Services.AddValidatorsFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
+#endregion
+
+
 #region ------- ForwardedHeaders -------
 // This middleware extracts the original values of the client request forwarded by the proxy and makes them available to you as first-hand values of the Request object
 // so you don't need to directly access HTTP requests to extract the values of X-Forwarded-* headers
@@ -136,7 +146,6 @@ var app = builder.Build();
 
 #region ------- Exception Handler -------
 app.UseMiddleware<ExceptionHandleMiddleware>();
-app.UseExceptionHandler("/Error/InternalServer");
 app.UseStatusCodePagesWithReExecute("/error/{0}");
 #endregion
 
@@ -165,23 +174,23 @@ else
 
 
 #region ------- Request Logger -------
-app.UseSerilogRequestLogging(options =>
-{
-    options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+//app.UseSerilogRequestLogging(options =>
+//{
+//    options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
 
-    options.GetLevel = (httpContext, elapsed, ex) =>
-    {
-        return (ex != null || httpContext.Response.StatusCode >= 500) ? LogEventLevel.Error :
-        (httpContext.Response.StatusCode >= 400) ? LogEventLevel.Warning : LogEventLevel.Information;
-    };
+//    options.GetLevel = (httpContext, elapsed, ex) =>
+//    {
+//        return (ex != null || httpContext.Response.StatusCode >= 500) ? LogEventLevel.Error :
+//        (httpContext.Response.StatusCode >= 400) ? LogEventLevel.Warning : LogEventLevel.Information;
+//    };
 
-    options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
-    {
-        diagnosticContext.Set("RequestScheme", httpContext.Request.Scheme);
-        diagnosticContext.Set("ClientIP", httpContext.Connection.RemoteIpAddress != null ? httpContext.Connection.RemoteIpAddress.ToString() : "unknown");
-        diagnosticContext.Set("UserAgent", httpContext.Request.Headers["User-Agent"].ToString());
-    };
-});
+//    options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+//    {
+//        diagnosticContext.Set("RequestScheme", httpContext.Request.Scheme);
+//        diagnosticContext.Set("ClientIP", httpContext.Connection.RemoteIpAddress != null ? httpContext.Connection.RemoteIpAddress.ToString() : "unknown");
+//        diagnosticContext.Set("UserAgent", httpContext.Request.Headers["User-Agent"].ToString());
+//    };
+//});
 #endregion
 
 

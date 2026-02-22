@@ -1,260 +1,52 @@
-﻿@using WebUI.Utils.ActionFilters
-@using WebUI.Utils.Extensions
+﻿ 
 @{
-    var currentUrl = Context.GetUrl();
-    var lightMode = Context.GetLightMode();
+    // var currentUrl = Context.GetUrl();
+    // var lightMode = Context.GetLightMode();
 }
 <!DOCTYPE html>
-<html class="@(lightMode == "dark" ? "dark-style" : "light-style") layout-menu-fixed layout-menu-expanded overflow-x-hidden"
-      dir="ltr"
-      data-theme="theme-default"
-      data-style="light"
-      lang="en">
+<html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - MyApp</title>
-    <link rel="icon" type="image/x-icon" href="~/assets/img/favicon/favicon.ico" />
+    <title>@ViewData["Title"] - WebUI</title>
 
-    <partial name="_LayoutHeader" />
+    <partial name="./Sections/_LayoutHeader.cshtml" />
 </head>
-<body>
-    <!-- Layout wrapper -->
-    <div class="layout-wrapper layout-content-navbar">
-        <div class="layout-container">
+<body id="kt_app_body" data-kt-app-layout="dark-sidebar" data-kt-app-header-fixed="true" data-kt-app-sidebar-enabled="true" data-kt-app-sidebar-fixed="true" data-kt-app-sidebar-hoverable="true" data-kt-app-sidebar-push-header="true" data-kt-app-sidebar-push-toolbar="true" data-kt-app-sidebar-push-footer="true" data-kt-app-toolbar-enabled="true" class="app-default">
+ 
+    <div class="d-flex flex-column flex-root app-root" id="kt_app_root">
+ 
+        <div class="app-page flex-column flex-column-fluid" id="kt_app_page">
+         
+            @await Component.InvokeAsync("Header")
 
-            @await Component.InvokeAsync("SideMenu")
+            <div class="app-wrapper flex-column flex-row-fluid" id="kt_app_wrapper">
+             
+                @await Component.InvokeAsync("SideMenu")
 
-            <!-- Layout container -->
-            <div class="layout-page">
+                <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
 
-                <!-- Navbar -->
-                <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
-                    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
-                        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
-                            <i class="fa-solid fa-bars"></i>
-                        </a>
-                    </div>
-
-                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
-                        <!-- Search -->
-                        <div class="navbar-nav align-items-center">
-                            <div class="nav-item d-flex align-items-center">
-                                <i class="bx bx-search fs-4 lh-0"></i>
-                                <input type="text" class="form-control border-0 shadow-none" placeholder="Search..."
-                                       aria-label="Search..." />
-                            </div>
+                    @await Html.PartialAsync("Partials/Toolbar")
+                    <div id="kt_app_content" class="app-content flex-column-fluid">
+                        <div id="kt_app_content_container" class="app-container container-fluid">
+                            @RenderBody()    
                         </div>
-                        <!-- /Search -->
-
-                        <ul class="navbar-nav flex-row align-items-center ms-auto">
-
-                            <!-- Light Mode -->
-                            <li class="nav-item dropdown-style-switcher dropdown me-2 me-xl-0">
-                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
-                                    <i class="fa-solid fa-sun fa-xl text-warning"></i>
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-end dropdown-styles">
-                                    <li>
-                                        <a class="dropdown-item  " asp-controller="UI" asp-action="SetLightMode" asp-route-mode="light"
-                                           asp-route-returnUrl="@currentUrl">
-                                            <span><i class="fa-solid fa-lightbulb fa-lg me-4"></i> Light</span>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item " asp-controller="UI" asp-action="SetLightMode" asp-route-mode="dark"
-                                           asp-route-returnUrl="@currentUrl">
-                                            <span><i class="fa-solid fa-moon fa-lg me-4"></i> Dark</span>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item " asp-controller="UI" asp-action="SetLightMode" asp-route-mode="system"
-                                           asp-route-returnUrl="@currentUrl">
-                                            <span><i class="fa-solid fa-display me-2 fa-lg me-3"></i> System</span>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
-
-                            <!-- ShortCuts -->
-                            <li class="nav-item dropdown-shortcuts navbar-dropdown dropdown me-2 me-xl-0">
-                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown"
-                                   data-bs-auto-close="outside" aria-expanded="false">
-                                    <i class='fa-brands fa-windows fa-xl'></i>
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-end p-0">
-                                    <div class="dropdown-menu-header border-bottom">
-                                        <div class="dropdown-header d-flex align-items-center py-3">
-                                            <h6 class="mb-0 me-auto">Shortcuts</h6>
-                                            <a href="javascript:void(0)" class="dropdown-shortcuts-add py-2" data-bs-toggle="tooltip"
-                                               data-bs-placement="top" title="Add shortcuts"><i class="bx bx-plus-circle text-heading"></i></a>
-                                        </div>
-                                    </div>
-                                    <div id="dropdownshortcutslist" class="dropdown-shortcuts-list scrollable-container">
-                                        <div class="row row-bordered overflow-visible g-0">
-                                            <div class="dropdown-shortcuts-item col">
-                                                <span class="dropdown-shortcuts-icon rounded-circle mb-3">
-                                                    <i class="bx bx-calendar bx-26px text-heading"></i>
-                                                </span>
-                                                <a href="app-calendar.html" class="stretched-link">Calendar</a>
-                                                <small>Appointments</small>
-                                            </div>
-                                            <div class="dropdown-shortcuts-item col">
-                                                <span class="dropdown-shortcuts-icon rounded-circle mb-3">
-                                                    <i class="bx bx-food-menu bx-26px text-heading"></i>
-                                                </span>
-                                                <a href="app-invoice-list.html" class="stretched-link">Invoice App</a>
-                                                <small>Manage Accounts</small>
-                                            </div>
-                                        </div>
-                                        <div class="row row-bordered overflow-visible g-0">
-                                            <div class="dropdown-shortcuts-item col">
-                                                <span class="dropdown-shortcuts-icon rounded-circle mb-3">
-                                                    <i class="bx bx-user bx-26px text-heading"></i>
-                                                </span>
-                                                <a href="app-user-list.html" class="stretched-link">User App</a>
-                                                <small>Manage Users</small>
-                                            </div>
-                                            <div class="dropdown-shortcuts-item col">
-                                                <span class="dropdown-shortcuts-icon rounded-circle mb-3">
-                                                    <i class="bx bx-check-shield bx-26px text-heading"></i>
-                                                </span>
-                                                <a href="app-access-roles.html" class="stretched-link">Role Management</a>
-                                                <small>Permission</small>
-                                            </div>
-                                        </div>
-                                        <div class="row row-bordered overflow-visible g-0">
-                                            <div class="dropdown-shortcuts-item col">
-                                                <span class="dropdown-shortcuts-icon rounded-circle mb-3">
-                                                    <i class="bx bx-pie-chart-alt-2 bx-26px text-heading"></i>
-                                                </span>
-                                                <a href="index.html" class="stretched-link">Dashboard</a>
-                                                <small>User Dashboard</small>
-                                            </div>
-                                            <div class="dropdown-shortcuts-item col">
-                                                <span class="dropdown-shortcuts-icon rounded-circle mb-3">
-                                                    <i class="bx bx-cog bx-26px text-heading"></i>
-                                                </span>
-                                                <a href="pages-account-settings-account.html" class="stretched-link">Setting</a>
-                                                <small>Account Settings</small>
-                                            </div>
-                                        </div>
-                                        <div class="row row-bordered overflow-visible g-0">
-                                            <div class="dropdown-shortcuts-item col">
-                                                <span class="dropdown-shortcuts-icon rounded-circle mb-3">
-                                                    <i class="bx bx-help-circle bx-26px text-heading"></i>
-                                                </span>
-                                                <a href="pages-faq.html" class="stretched-link">FAQs</a>
-                                                <small>FAQs & Articles</small>
-                                            </div>
-                                            <div class="dropdown-shortcuts-item col">
-                                                <span class="dropdown-shortcuts-icon rounded-circle mb-3">
-                                                    <i class="bx bx-window-open bx-26px text-heading"></i>
-                                                </span>
-                                                <a href="modal-examples.html" class="stretched-link">Modals</a>
-                                                <small>Useful Popups</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
-                            <!-- Quick links -->
-                            <!-- User -->
-                            <li class="nav-item navbar-dropdown dropdown-user dropdown">
-                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
-                                    <div class="avatar avatar-online">
-                                        <img src="../assets/img/avatars/1.png" alt class="w-px-40 h-auto rounded-circle" />
-                                    </div>
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li>
-                                        <a class="dropdown-item" href="#">
-                                            <div class="d-flex">
-                                                <div class="flex-shrink-0 me-3">
-                                                    <div class="avatar avatar-online">
-                                                        <img src="../assets/img/avatars/1.png" alt class="w-px-40 h-auto rounded-circle" />
-                                                    </div>
-                                                </div>
-                                                <div class="flex-grow-1">
-                                                    <span class="fw-semibold d-block">John Doe</span>
-                                                    <small class="text-muted">Admin</small>
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <div class="dropdown-divider"></div>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="#">
-                                            <i class="bx bx-user me-2"></i>
-                                            <span class="align-middle">My Profile</span>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="#">
-                                            <i class="bx bx-cog me-2"></i>
-                                            <span class="align-middle">Settings</span>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="#">
-                                            <span class="d-flex align-items-center align-middle">
-                                                <i class="flex-shrink-0 bx bx-credit-card me-2"></i>
-                                                <span class="flex-grow-1 align-middle">Billing</span>
-                                                <span class="flex-shrink-0 badge badge-center rounded-pill bg-danger w-px-20 h-px-20">4</span>
-                                            </span>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <div class="dropdown-divider"></div>
-                                    </li>
-                                    <li>
-                                        <a asp-controller="Account" asp-action="LogOut" class="dropdown-item">
-                                            <i class="bx bx-power-off me-2"></i>
-                                            <span class="align-middle">Log Out</span>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
-                            <!--/ User -->
-                        </ul>
-
                     </div>
-                </nav>
-                <!-- / Navbar -->
-                <!-- Content wrapper -->
-                <div class="content-wrapper">
-                    <!-- Content -->
-
-                    <div class="container-xxl flex-grow-1 container-p-y">
-                        @RenderBody()
-                    </div>
-                    <!-- / Content -->
-                    <!-- Footer -->
-                    <footer class="content-footer footer bg-light">
-                        <div class="container-fluid d-flex flex-md-row flex-column justify-content-between align-items-md-center gap-1 container-p-x py-4">
-                            <div>
-                                <a href="/" target="_blank" class="footer-brand fw-bold">My App</a> ©
-                            </div>
-                            <div>
-                                <a href="/" class="footer-link me-6" target="_blank">License</a>
-                            </div>
-                        </div>
-                    </footer>
-                    <!-- / Footer -->
-
-                    <div class="content-backdrop fade"></div>
                 </div>
-                <!-- Content wrapper -->
+ 
             </div>
-            <!-- / Layout page -->
         </div>
-
-        <!-- Overlay -->
-        <div class="layout-overlay layout-menu-toggle"></div>
     </div>
-    <partial name="_LayoutScripts" />
+
+    @await Html.PartialAsync("Partials/Activities")
+
+    @await Html.PartialAsync("Partials/Chat")
+
+    <div id="kt_scrolltop" class="scrolltop" data-kt-scrolltop="true">
+        <i class="ki-duotone ki-arrow-up"><span class="path1"></span><span class="path2"></span></i>
+    </div>
+     
+    <partial name="./Sections/_LayoutScripts.cshtml" />
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

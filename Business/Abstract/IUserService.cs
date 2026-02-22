@@ -4,7 +4,6 @@ using Core.Utils.Pagination;
 using Core.Utils.ResultPattern;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Model.Dtos.User.Commands;
-using Model.Dtos.User.Queries;
 using Model.Entities;
 using System.Linq.Expressions;
 
@@ -37,6 +36,7 @@ public interface IUserService
     #endregion
 
     #region Update
+    Task<Result<UserUpdateDto>> GetUpdateModelAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Result<UserBasicResponseDto>> UpdateAsync(UserUpdateDto request, CancellationToken cancellationToken = default);
     #endregion
 

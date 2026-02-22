@@ -1,23 +1,39 @@
 ﻿using Core.Enums;
 using Core.Utils;
 using Core.Utils.ResultPattern;
+using Core.Utils.Validation;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace WebUI.Controllers;
 
 public abstract class BaseController : Controller
 {
-    private readonly ILogger<BaseController> _logger;
-    public BaseController(ILogger<BaseController> logger) => _logger = logger;
+    private readonly ILogger _logger;
+    public BaseController(ILogger logger) => _logger = logger;
 
 
     /// <summary>
     /// Handle result and return Json content
     /// </summary>
-    protected IActionResult ToJsonResult(Core.Utils.ResultPattern.IResult result)
+    protected IActionResult ToAction(Result result)
     {
         if (result.IsSuccess)
             return Ok();
+
+        LogFailedProcess(result);
+
+        var problemDetails = result.GetProblemDetail();
+        return new ObjectResult(problemDetails)
+        {
+            StatusCode = problemDetails.Status
+        };
+    }
+
+    protected IActionResult ToAction<TData>(Result<TData> result)
+    {
+        if (result.IsSuccess)
+            return Ok(result.Data);
 
         LogFailedProcess(result);
 
@@ -32,12 +48,15 @@ public abstract class BaseController : Controller
     /// <summary>
     /// Handle result and return error view
     /// </summary>
-    protected IActionResult ToErrorView(Result result)
+    protected IActionResult ToErrorView(Result result, string? returnUrl = default)
     {
         if (result.IsSuccess)
             return RedirectToAction("Index", "Home");
 
         LogFailedProcess(result);
+
+        if (returnUrl != null)
+            return Redirect(returnUrl);
 
         return result.Error.Type switch
         {
@@ -50,11 +69,11 @@ public abstract class BaseController : Controller
     }
 
 
-    protected void AddValidationFailuresToModel(Core.Utils.ResultPattern.IResult result)
+    protected void AddValidationFailuresToModel(ValidatorResult validatorResult)
     {
-        if (result.Error?.Type == ErrorType.Validation && result.Error.ValidationFailures != null)
+        if (validatorResult.Failures != null)
         {
-            foreach (var failure in result.Error.ValidationFailures)
+            foreach (var failure in validatorResult.Failures)
                 foreach (var errorMessage in failure.Value)
                     ModelState.AddModelError(failure.Key, errorMessage);
         }
@@ -80,7 +99,7 @@ public abstract class BaseController : Controller
                 );
                 break;
             case ErrorType.Validation:
-                _logger.LogInformation("Validation error: \nMessage: {Message} \nDetail: {@Error}",
+                _logger.LogWarning("Validation error: \nMessage: {Message} \nDetail: {@Error}",
                     result.Message,
                     result.Error
                 );

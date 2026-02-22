@@ -17,7 +17,7 @@ namespace DataAccess.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.4")
+                .HasAnnotation("ProductVersion", "9.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -343,15 +343,23 @@ namespace DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("ClientType")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreateDateUtc")
                         .HasColumnType("datetime2");
+
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("ExpirationUtc")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("IpAddress")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("bit");
 
                     b.Property<int>("TTL")
                         .HasColumnType("int");
@@ -480,8 +488,8 @@ namespace DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("Action")
-                        .HasColumnType("int");
+                    b.Property<byte>("Action")
+                        .HasColumnType("tinyint");
 
                     b.Property<string>("ClientIp")
                         .HasColumnType("nvarchar(max)");
@@ -506,7 +514,7 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Archives", (string)null);
+                    b.ToTable("ProjectArchives", (string)null);
                 });
 
             modelBuilder.Entity("Model.ProjectEntities.Log", b =>
@@ -517,8 +525,8 @@ namespace DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("Action")
-                        .HasColumnType("int");
+                    b.Property<byte>("Action")
+                        .HasColumnType("tinyint");
 
                     b.Property<string>("ClientIp")
                         .HasColumnType("nvarchar(max)");
@@ -549,7 +557,7 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Logs", (string)null);
+                    b.ToTable("ProjectLogs", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>

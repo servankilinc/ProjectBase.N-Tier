@@ -1,5 +1,6 @@
 using API.Controllers.Base;
 using Business.Abstract;
+using Business.Concrete;
 using Core.BaseRequestModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -84,6 +85,13 @@ public class BlogController : BaseController
     #endregion
 
     #region Update
+    [HttpGet]
+    public async Task<IActionResult> Update(Guid id)
+    {
+        var result = await _blogService.GetUpdateModelAsync(id);
+        return ToAction(result);
+    }
+
     [HttpPut]
     public async Task<IActionResult> Update(BlogUpdateDto request)
     {

@@ -37,39 +37,10 @@ public static class HttpContextExtensions
             .ToString();
     }
 
-    public static string GetPath(this HttpContext httpContext)
-    {
-        var path = httpContext.Request.Path.Value ?? string.Empty;
-
-        return path.Trim();
-    }
-
-    public static string GetBasePath(this HttpContext httpContext)
-    {
-        string? controller = httpContext.GetRouteData().Values["controller"]?.ToString()?.Trim();
-        string? action = httpContext.GetRouteData().Values["action"]?.ToString()?.Trim();
-
-        return $"/{controller}/{action}";
-    }
-
-
-    public static string GetLightMode(this HttpContext httpContext)
-    {
-        return httpContext.Request.Cookies["light_mode"] ?? "system";
-    }
-
-    public static void SetLightMode(this HttpContext httpContext, string mode)
-    {
-        httpContext.Response.Cookies.Append("light_mode", mode, new CookieOptions
-        {
-            Expires = DateTime.Now.AddDays(7),
-        });
-    }
-
     public static string GetCurrentLanguage(this HttpContext httpContext)
     {
         var localizationSettings = httpContext.RequestServices.GetRequiredService<LocalizationSettings>();
-        string defaultCulture = localizationSettings?.DefaultLanguage.GetDescription() ?? "en-US";
+        string defaultCulture = localizationSettings?.DefaultLanguage.GetDescription() ?? "tr-TR";
 
         var cookieName = CookieRequestCultureProvider.DefaultCookieName;
         var cookieValue = httpContext.Request.Cookies[cookieName];

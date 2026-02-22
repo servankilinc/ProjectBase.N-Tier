@@ -35,6 +35,7 @@ public interface ICategoryService
     #endregion
 
     #region Update
+    Task<Result<CategoryUpdateDto>> GetUpdateModelAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Result<CategoryResponseDto>> UpdateAsync(CategoryUpdateDto request, CancellationToken cancellationToken = default);
     #endregion
 

@@ -50,7 +50,9 @@ public static class QueryableFilterExtension
             throw new ArgumentException($"Invalid opreator type for dynamic filter, operator: {filter.Operator}");
 
         if (filter.Value is null && OperatorsWithValue.ContainsKey(filter.Operator!))
+        {
             throw new ArgumentException($"Value required for operator: {filter.Operator}");
+        }
 
         if (!string.IsNullOrWhiteSpace(filter.Logic) && !Logics.Contains(filter.Logic))
             throw new ArgumentException($"Invalid logic type for dynamic filter, logic: {filter.Logic}");
@@ -58,37 +60,45 @@ public static class QueryableFilterExtension
 
     private static string BuildExpression(Filter filter, IList<object> parameters)
     {
+        if (filter.Value == null) filter.Value = string.Empty;
+
         Validate(filter);
 
-        var expressions = new List<string>();
+        var parts = new List<string>();
 
         if (filter.Operator != "base")
         {
-            if (OperatorsWithValue.ContainsKey(filter.Operator!))
+            if (OperatorsWithValue.TryGetValue(filter.Operator!, out var op))
             {
                 var index = parameters.Count;
                 parameters.Add(filter.Value!);
-                expressions.Add(OperatorsWithValue[filter.Operator!](filter.Field!, index));
+                parts.Add(op(filter.Field!, index));
             }
-            else
+            else if (OperatorsWithoutValue.TryGetValue(filter.Operator!, out var opNoVal))
             {
-                expressions.Add(OperatorsWithoutValue[filter.Operator!](filter.Field!));
+                parts.Add(opNoVal(filter.Field!));
             }
         }
 
         if (filter.Filters?.Any() == true)
         {
-            var childExpressions = filter.Filters
+            var childParts = filter.Filters
                 .Select(f => BuildExpression(f, parameters))
-                .Where(e => !string.IsNullOrWhiteSpace(e))
+                .Where(x => !string.IsNullOrWhiteSpace(x))
                 .ToList();
 
-            if (childExpressions.Any())
+            if (childParts.Any())
             {
-                expressions.Add($"({string.Join($" {filter.Logic} ", childExpressions)})");
+                var logic = string.IsNullOrWhiteSpace(filter.Logic) ? "and" : filter.Logic;
+                parts.Add($"({string.Join($" {logic} ", childParts)})");
             }
         }
 
-        return expressions.Any() ? string.Join($" {filter.Logic} ", expressions) : string.Empty;
+        if (!parts.Any())
+            return string.Empty;
+
+        var joinLogic = string.IsNullOrWhiteSpace(filter.Logic) ? "and" : filter.Logic;
+
+        return $"({string.Join($" {joinLogic} ", parts)})";
     }
 }
