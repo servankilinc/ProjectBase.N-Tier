@@ -71,15 +71,15 @@
         document.documentElement.setAttribute("data-bs-theme", themeMode);
     }
 
-    const syncSidebarTheme = (mode) => {
-        document.body.setAttribute("data-kt-app-layout", mode === "light" ? "light-sidebar" : "dark-sidebar");
-        document.body.setAttribute("data-kt-theme-mode", mode === "light" ? "light" : "dark");
-    };
+    // const syncSidebarTheme = (mode) => {
+    //     document.body.setAttribute("data-kt-app-layout", mode === "light" ? "light-sidebar" : "dark-sidebar");
+    //     document.body.setAttribute("data-kt-theme-mode", mode === "light" ? "light" : "dark");
+    // };
 
-    syncSidebarTheme(document.documentElement.getAttribute("data-bs-theme"));
+    // syncSidebarTheme(document.documentElement.getAttribute("data-bs-theme"));
 
-    window.addEventListener("kt.thememode.change", function (event) {
-        syncSidebarTheme(event.detail.mode);
-    });
+    // window.addEventListener("kt.thememode.change", function (event) {
+    //     syncSidebarTheme(event.detail.mode);
+    // });
 </script>
 <!-- Theme mode setup on page load-->

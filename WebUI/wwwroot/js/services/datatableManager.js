@@ -62,7 +62,7 @@
     exportButton: {
         extend: 'collection',
         className: 'btn btn-light-success shadow-sm dropdown-toggle',
-        text: '<i class="ki-duotone ki-exit-down fs-2"><span class="path1"></span><span class="path2"></span></i> <span class="d-none d-lg-inline-block">Export</span>',
+        text: '<i class="ki-duotone ki-exit-down fs-3"><span class="path1"></span><span class="path2"></span></i> <span class="d-none d-lg-inline-block">Export</span>',
         buttons: ['print', 'excel', 'pdf', 'copy'].map(type => ({
             extend: type,
             className: 'dropdown-item',
@@ -399,13 +399,13 @@
         // btn-onclick
         if (typeof btnObject.onClick === 'function') {
             btnElement.onclick = async (e) => {
-                const $btn = $(btnElement);
-                if ($btn != null) this._toggleButtonLoading($btn, true);
+                //const $btn = $(btnElement); // (zaten requestManager buutonu işliyor)
+                //if ($btn != null) this._toggleButtonLoading($btn, true);
                 try {
                     await onClick(e);
                 }
                 finally {
-                    if ($btn != null) this._toggleButtonLoading($btn, false);
+                    //if ($btn != null) this._toggleButtonLoading($btn, false);
                 }
             };
         }
