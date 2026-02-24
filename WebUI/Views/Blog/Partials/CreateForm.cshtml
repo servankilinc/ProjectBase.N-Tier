@@ -10,7 +10,7 @@
 			<label asp-for="CreateModel.AuthorId" class="form-label">
 				Author
 			</label>
-			<select asp-for="CreateModel.AuthorId" asp-items="Model.AuthorIds" class="autoInitSelect2 form-select">
+			<select asp-for="CreateModel.AuthorId" asp-items="Model.AuthorIds" class="autoInitSelect2 form-select form-control-solid">
 				<option></option>
 			</select>
 			<span asp-validation-for="CreateModel.AuthorId"></span>
@@ -19,21 +19,21 @@
 			<label asp-for="CreateModel.Title" class="form-label">
 				Title
 			</label>
-			<input asp-for="CreateModel.Title" type="text" class="form-control" />
+			<input asp-for="CreateModel.Title" type="text" class="form-control form-control-solid" />
 			<span asp-validation-for="CreateModel.Title"></span>
 		</div>
 		<div class="col-sm-6">
 			<label asp-for="CreateModel.Content" class="form-label">
 				Content
 			</label>
-			<input asp-for="CreateModel.Content" type="text" class="form-control" />
+			<input asp-for="CreateModel.Content" type="text" class="form-control form-control-solid" />
 			<span asp-validation-for="CreateModel.Content"></span>
 		</div>
 		<div class="col-sm-6">
 			<label asp-for="CreateModel.CategoryId" class="form-label">
 				Category
 			</label>
-			<select asp-for="CreateModel.CategoryId" asp-items="Model.CategoryIds" class="autoInitSelect2 form-select">
+			<select asp-for="CreateModel.CategoryId" asp-items="Model.CategoryIds" class="autoInitSelect2 form-select form-control-solid">
 				<option></option>
 			</select>
 			<span asp-validation-for="CreateModel.CategoryId"></span>
@@ -42,7 +42,7 @@
 			<label asp-for="CreateModel.BannerImage" class="form-label">
 				BannerImage
 			</label>
-			<input asp-for="CreateModel.BannerImage" class="form-control" />
+			<input asp-for="CreateModel.BannerImage" class="form-control form-control-solid" />
 			<span asp-validation-for="CreateModel.BannerImage"></span>
 		</div>
 	</div>

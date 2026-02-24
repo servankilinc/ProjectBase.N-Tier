@@ -28,12 +28,6 @@ public class SideMenuViewComponent : ViewComponent
                         Title = "Managment",
                         Icon = "<i class=\"fa-regular fa-file-lines\"></i>",
                         Path = "/Blog/Index"
-                    },
-                    new MenuItem
-                    {
-                        Title = "Create",
-                        Icon = "<i class=\"fa-solid fa-file-circle-plus\"></i>",
-                        Path= "/Blog/Create"
                     }
                 }
             },
@@ -48,12 +42,6 @@ public class SideMenuViewComponent : ViewComponent
                         Title = "Managment",
                         Icon = "<i class=\"fa-regular fa-file-lines\"></i>",
                         Path = "/Category/Index"
-                    },
-                    new MenuItem
-                    {
-                        Title = "Create",
-                        Icon = "<i class=\"fa-solid fa-file-circle-plus\"></i>",
-                        Path= "/Category/Create"
                     }
                 }
             },
@@ -68,12 +56,6 @@ public class SideMenuViewComponent : ViewComponent
                         Title = "Managment",
                         Icon = "<i class=\"fa-regular fa-file-lines\"></i>",
                         Path = "/BlogComment/Index"
-                    },
-                    new MenuItem
-                    {
-                        Title = "Create",
-                        Icon = "<i class=\"fa-solid fa-file-circle-plus\"></i>",
-                        Path= "/BlogComment/Create"
                     }
                 }
             },
@@ -89,12 +71,6 @@ public class SideMenuViewComponent : ViewComponent
                         Title = "Managment",
                         Icon = "<i class=\"fa-regular fa-file-lines\"></i>",
                         Path = "/User/Index"
-                    },
-                    new MenuItem
-                    {
-                        Title = "Create",
-                        Icon = "<i class=\"fa-solid fa-file-circle-plus\"></i>",
-                        Path= "/User/Create"
                     }
                 }
             },

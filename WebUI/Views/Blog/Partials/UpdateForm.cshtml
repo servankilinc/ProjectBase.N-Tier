@@ -5,27 +5,27 @@
 }
 
 <form asp-controller="Blog" asp-action="Update" method="post">
-	<input asp-for="UpdateModel.Id" type="hidden" class="form-control" />
+	<input asp-for="UpdateModel.Id" type="hidden" class="form-control form-control-solid" />
 	<div class="row row-gap-4 m-2">
 		<div class="col-sm-6">
 			<label asp-for="UpdateModel.Title" class="form-label">
 				Title
 			</label>
-			<input asp-for="UpdateModel.Title" type="text" class="form-control" />
+			<input asp-for="UpdateModel.Title" type="text" class="form-control form-control-solid" />
 			<span asp-validation-for="UpdateModel.Title"></span>
 		</div>
 		<div class="col-sm-6">
 			<label asp-for="UpdateModel.Content" class="form-label">
 				Content
 			</label>
-			<input asp-for="UpdateModel.Content" type="text" class="form-control" />
+			<input asp-for="UpdateModel.Content" type="text" class="form-control form-control-solid" />
 			<span asp-validation-for="UpdateModel.Content"></span>
 		</div>
 		<div class="col-sm-6">
 			<label asp-for="UpdateModel.CategoryId" class="form-label">
 				Category <!-- CamelCase arasına boşluk koy ve Id ve devamını koyma -->
 			</label>
-			<select asp-for="UpdateModel.CategoryId" asp-items="Model.CategoryIds" class="autoInitSelect2 form-select">
+			<select asp-for="UpdateModel.CategoryId" asp-items="Model.CategoryIds" class="autoInitSelect2 form-select form-control-solid">
 				<option></option>
 			</select>
 			<span asp-validation-for="UpdateModel.CategoryId"></span>
@@ -34,7 +34,7 @@
 			<label asp-for="UpdateModel.BannerImage" class="form-label">
 				BannerImage
 			</label>
-			<input asp-for="UpdateModel.BannerImage" class="form-control" />
+			<input asp-for="UpdateModel.BannerImage" class="form-control form-control-solid" />
 			<span asp-validation-for="UpdateModel.BannerImage"></span>
 		</div>
 	</div>

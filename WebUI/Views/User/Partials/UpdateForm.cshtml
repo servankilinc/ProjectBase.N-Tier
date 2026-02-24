@@ -5,27 +5,27 @@
 }
 
 <form asp-controller="User" asp-action="Update" method="post">
-    <input asp-for="UpdateModel.Id" type="hidden" class="form-control" />
+    <input asp-for="UpdateModel.Id" type="hidden" class="form-control form-control-solid " />
     <div class="row row-gap-4 m-2">
         <div class="col-md-6">
             <label asp-for="UpdateModel.Name" class="form-label">
                 Name
             </label>
-            <input asp-for="UpdateModel.Name" type="text" class="form-control" />
+            <input asp-for="UpdateModel.Name" type="text" class="form-control form-control-solid " />
             <span asp-validation-for="UpdateModel.Name" class="form_validation_feedback"></span>
         </div>
         <div class="col-md-6">
             <label asp-for="UpdateModel.LastName" class="form-label">
                 Last Name
             </label>
-            <input asp-for="UpdateModel.LastName" type="text" class="form-control" />
+            <input asp-for="UpdateModel.LastName" type="text" class="form-control form-control-solid " />
             <span asp-validation-for="UpdateModel.LastName" class="form_validation_feedback"></span>
         </div>
         <div class="col-md-6">
             <label asp-for="UpdateModel.Addres" class="form-label">
                 Addres
             </label>
-            <input asp-for="UpdateModel.Addres" type="text" class="form-control" />
+            <input asp-for="UpdateModel.Addres" type="text" class="form-control form-control-solid " />
             <span asp-validation-for="UpdateModel.Addres" class="form_validation_feedback"></span>
         </div>
         <div class="col-md-6">
