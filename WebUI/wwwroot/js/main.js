@@ -2,6 +2,48 @@ function GenerateId() {
     return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c => (+c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> +c / 4).toString(16));
 }
 
+
+/**
+ * FlatPicker Auto Initilaze
+ */
+function AutoInitFlatPicker(parentElement) {
+
+    //if (parentElement == undefined)
+    {
+        const elemensOfFlatPicker = document.querySelectorAll('.autoInitFlatPicker');
+
+        if (elemensOfFlatPicker != null && elemensOfFlatPicker.length != undefined && elemensOfFlatPicker.length > 0) {
+            elemensOfFlatPicker.forEach((flatpickrFriendly) => {
+                flatpickrFriendly.flatpickr();
+            });
+        }
+    }
+    //else {
+    //    const elemensOfFlatPicker = parentElement.find(".autoInitFlatPicker");
+
+    //    if (elemensOfFlatPicker != null && elemensOfFlatPicker.length != undefined && elemensOfFlatPicker.length > 0) {
+    //        elemensOfFlatPicker.map((index, flatpickrFriendly) => {
+    //            flatpickrFriendly.flatpickr({
+    //                altInput: true,
+    //                altFormat: "F j, Y",
+    //                dateFormat: "Y-m-d",
+    //                static: true,
+    //                todayBtn: true,
+    //                clearBtn: true,
+    //                monthSelectorType: "static"
+    //            });
+    //        });
+    //    }
+    //}
+}
+document.addEventListener('DOMContentLoaded', function () {
+    (function () {
+        AutoInitFlatPicker();
+    })();
+});
+
+
+
 ///**
 // * Select2 Auto Initilaze
 // */
@@ -45,52 +87,6 @@ function GenerateId() {
 //    })();
 //});
 
-///**
-// * FlatPicker Auto Initilaze
-// */
-//function AutoInitFlatPicker(parentElement) {
-
-//    if (parentElement == undefined) {
-//        const elemensOfFlatPicker = document.querySelectorAll('.autoInitFlatPicker');
-
-//        if (elemensOfFlatPicker != null && elemensOfFlatPicker.length != undefined && elemensOfFlatPicker.length > 0) {
-//            elemensOfFlatPicker.forEach((flatpickrFriendly) => {
-//                flatpickrFriendly.flatpickr({
-//                    altInput: true,
-//                    altFormat: "F j, Y",
-//                    dateFormat: "Y-m-d",
-//                    static: true,
-//                    todayBtn: true,
-//                    clearBtn: true,
-//                    showMonths: true,
-//                    monthSelectorType: "static"
-//                });
-//            });
-//        }
-//    }
-//    else {
-//        const elemensOfFlatPicker = parentElement.find(".autoInitFlatPicker");
-
-//        if (elemensOfFlatPicker != null && elemensOfFlatPicker.length != undefined && elemensOfFlatPicker.length > 0) {
-//            elemensOfFlatPicker.map((index, flatpickrFriendly) => {
-//                flatpickrFriendly.flatpickr({
-//                    altInput: true,
-//                    altFormat: "F j, Y",
-//                    dateFormat: "Y-m-d",
-//                    static: true,
-//                    todayBtn: true,
-//                    clearBtn: true,
-//                    monthSelectorType: "static"
-//                });
-//            });
-//        }
-//    }
-//}
-//document.addEventListener('DOMContentLoaded', function () {
-//    (function () {
-//        AutoInitFlatPicker();
-//    })();
-//});
 
 
 ///**

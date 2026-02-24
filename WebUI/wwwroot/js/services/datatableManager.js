@@ -25,8 +25,8 @@
     defaultTableDomWithButtons: `
         <"card shadow-none border"
             <"card-header bg-light"
-                <"card-toolbar"
-                    <"dt-action-buttons text-end"B>
+                <"card-toolbar w-100"
+                    <"w-100"B>
                 >
             >
             <"card-body"
@@ -43,7 +43,7 @@
         >`,
     defaultButtonsDom: {
         container: {
-            className: ''
+            className: 'w-100 d-flex justify-content-start align-itmes-start'
         },
         button: {
             className: 'btn-sm'
@@ -58,10 +58,10 @@
     ],
     //#endregion
 
-    //#region EXPORT BUTTONS
+    //#region EXPORT BUTTON
     exportButton: {
         extend: 'collection',
-        className: 'btn btn-light-success shadow-sm dropdown-toggle',
+        className: 'btn btn-light-success shadow-sm dropdown-toggle ms-auto',
         text: '<i class="ki-duotone ki-exit-down fs-3"><span class="path1"></span><span class="path2"></span></i> <span class="d-none d-lg-inline-block">Export</span>',
         buttons: ['print', 'excel', 'pdf', 'copy'].map(type => ({
             extend: type,
@@ -89,32 +89,32 @@
     defaultButtonsProps: {
         detail: {
             text: 'Detay',
-            name: 'btn-primary',
+            name: 'btn btn-outline btn-outline-primary',
             icon: 'fa-solid fa-file-lines', // 'fa-regular fa-file-lines',
         },
         update: {
             text: 'Güncelle',
-            name: 'btn-success',
+            name: 'btn btn-outline btn-outline-success',
             icon: 'fa-solid fa-pen-to-square',
         },
         delete: {
             text: 'Sil',
-            name: 'btn-danger',
+            name: 'btn btn-outline btn-outline-danger',
             icon: 'fa-solid fa-trash',
         },
         confirmation: {
             text: 'Onay',
-            name: 'btn-info',
+            name: 'btn btn-outline btn-outline-info',
             icon: 'fa-solid fa-circle-check',
         },
         cancel: {
             text: 'İptal',
-            name: 'btn-secondary',
+            name: 'btn btn-outline btn-outline-secondary',
             icon: 'fa-solid fa-ban',
         },
         undo: {
             text: 'Geri Al',
-            name: 'btn-warning',
+            name: 'btn btn-outline btn-outline-warning',
             icon: 'fa-solid fa-trash-can-arrow-up',
         }
     },
@@ -392,7 +392,7 @@
         // btn-init
         const btnElement = document.createElement('button');
         btnElement.id = btnObject.id;
-        btnElement.className = `btn ${btnObject.name} btn-${btnObject.size} mx-1 ${btnObject.className || ``} px-3`;
+        btnElement.className = `btn ${btnObject.name} btn-${btnObject.size} mx-1 ${btnObject.className || ``} px-2 py-1`;
         Object.entries(btnObject.attributes).forEach(([key, val]) => btnElement.setAttribute(key, val));
         btnElement.disabled = btnObject.disable;
 
