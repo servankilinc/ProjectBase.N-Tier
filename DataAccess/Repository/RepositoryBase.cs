@@ -111,9 +111,9 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return query.Any();
     }
@@ -122,9 +122,9 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return query.Count();
     }
@@ -142,12 +142,12 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
         if (orderBy != null) query = orderBy(query);
         if (sorts != null) query = query.ToSort(sorts);
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (!tracking) query = query.AsNoTracking();
 
         return query.FirstOrDefault();
@@ -164,12 +164,12 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
         if (orderBy != null) query = orderBy(query);
         if (sorts != null) query = query.ToSort(sorts);
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return query.Select(select).FirstOrDefault();
     }
@@ -185,12 +185,12 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
         if (orderBy != null) query = orderBy(query);
         if (sorts != null) query = query.ToSort(sorts);
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return query.ProjectTo<TResult>(configurationProvider).FirstOrDefault();
     }
@@ -208,12 +208,12 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
         if (orderBy != null) query = orderBy(query);
         if (sorts != null) query = query.ToSort(sorts);
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (!tracking) query = query.AsNoTracking();
 
         return query.ToList();
@@ -230,12 +230,12 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
         if (orderBy != null) query = orderBy(query);
         if (sorts != null) query = query.ToSort(sorts);
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return query.Select(select).ToList();
     }
@@ -251,12 +251,12 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
         if (orderBy != null) query = orderBy(query);
         if (sorts != null) query = query.ToSort(sorts);
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return query.ProjectTo<TResult>(configurationProvider).ToList();
     }
@@ -272,6 +272,7 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
@@ -281,7 +282,6 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
             datatableRequest.Order = null;
         }
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return query.ToDatatableServerSide(datatableRequest);
     }
@@ -296,6 +296,7 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
@@ -305,7 +306,6 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
             datatableRequest.Order = null;
         }
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return query.Select(select).ToDatatableServerSide(datatableRequest);
     }
@@ -320,6 +320,7 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
@@ -329,7 +330,6 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
             datatableRequest.Order = null;
         }
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return query.ProjectTo<TResult>(configurationProvider).ToDatatableServerSide(datatableRequest);
     }
@@ -345,6 +345,7 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
@@ -354,7 +355,6 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
             datatableRequest.Order = null;
         }
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return query.ToDatatableClientSide();
     }
@@ -369,6 +369,7 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
@@ -378,7 +379,6 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
             datatableRequest.Order = null;
         }
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return query.Select(select).ToDatatableClientSide();
     }
@@ -393,6 +393,7 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
@@ -402,7 +403,6 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
             datatableRequest.Order = null;
         }
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return query.ProjectTo<TResult>(configurationProvider).ToDatatableClientSide();
     }
@@ -418,12 +418,12 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (paginationRequest.Filter != null) query = query.ToFilter(paginationRequest.Filter);
         if (orderBy != null) query = orderBy(query);
         if (paginationRequest.Sorts != null) query = query.ToSort(paginationRequest.Sorts);
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return query.ToPaginate(paginationRequest);
     }
@@ -438,12 +438,12 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (paginationRequest.Filter != null) query = query.ToFilter(paginationRequest.Filter);
         if (orderBy != null) query = orderBy(query);
         if (paginationRequest.Sorts != null) query = query.ToSort(paginationRequest.Sorts);
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return query.Select(select).ToPaginate(paginationRequest);
     }
@@ -458,12 +458,12 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (paginationRequest.Filter != null) query = query.ToFilter(paginationRequest.Filter);
         if (orderBy != null) query = orderBy(query);
         if (paginationRequest.Sorts != null) query = query.ToSort(paginationRequest.Sorts);
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return query.ProjectTo<TResult>(configurationProvider).ToPaginate(paginationRequest);
     }
@@ -539,9 +539,9 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return await query.AnyAsync(cancellationToken);
     }
@@ -554,9 +554,9 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return await query.CountAsync(cancellationToken);
     }
@@ -575,12 +575,12 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
         if (orderBy != null) query = orderBy(query);
         if (sorts != null) query = query.ToSort(sorts);
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (!tracking) query = query.AsNoTracking();
 
         return await query.FirstOrDefaultAsync(cancellationToken);
@@ -598,12 +598,12 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
         if (orderBy != null) query = orderBy(query);
         if (sorts != null) query = query.ToSort(sorts);
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return await query.Select(select).FirstOrDefaultAsync(cancellationToken);
     }
@@ -620,12 +620,12 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
         if (orderBy != null) query = orderBy(query);
         if (sorts != null) query = query.ToSort(sorts);
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return await query.ProjectTo<TResult>(configurationProvider).FirstOrDefaultAsync(cancellationToken);
     }
@@ -644,12 +644,12 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
         if (orderBy != null) query = orderBy(query);
         if (sorts != null) query = query.ToSort(sorts);
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (!tracking) query = query.AsNoTracking();
 
         return await query.ToListAsync(cancellationToken);
@@ -667,14 +667,14 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
         if (orderBy != null) query = orderBy(query);
         if (sorts != null) query = query.ToSort(sorts);
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
-        return await query.Select(select).ToListAsync();
+        return await query.Select(select).ToListAsync(cancellationToken);
     }
 
     public async Task<ICollection<TResult>?> GetAllAsync<TResult>(
@@ -689,12 +689,12 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (filter != null) query = query.ToFilter(filter);
         if (orderBy != null) query = orderBy(query);
         if (sorts != null) query = query.ToSort(sorts);
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return await query.ProjectTo<TResult>(configurationProvider).ToListAsync(cancellationToken);
     }
@@ -711,6 +711,7 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
@@ -720,7 +721,6 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
             datatableRequest.Order = null;
         }
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return await query.ToDatatableServerSideAsync(datatableRequest, cancellationToken);
     }
@@ -736,6 +736,7 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
@@ -745,7 +746,6 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
             datatableRequest.Order = null;
         }
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return await query.Select(select).ToDatatableServerSideAsync(datatableRequest, cancellationToken);
     }
@@ -761,6 +761,7 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
@@ -770,7 +771,6 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
             datatableRequest.Order = null;
         }
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return await query.ProjectTo<TResult>(configurationProvider).ToDatatableServerSideAsync(datatableRequest, cancellationToken);
     }
@@ -787,6 +787,7 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
@@ -796,7 +797,6 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
             datatableRequest.Order = null;
         }
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return await query.ToDatatableClientSideAsync(cancellationToken);
     }
@@ -812,6 +812,7 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
@@ -821,7 +822,6 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
             datatableRequest.Order = null;
         }
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return await query.Select(select).ToDatatableClientSideAsync(cancellationToken);
     }
@@ -837,6 +837,7 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (datatableRequest.Filter != null) query = query.ToFilter(datatableRequest.Filter);
         if (orderBy != null) query = orderBy(query);
@@ -846,7 +847,6 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
             datatableRequest.Order = null;
         }
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return await query.ProjectTo<TResult>(configurationProvider).ToDatatableClientSideAsync(cancellationToken);
     }
@@ -863,12 +863,12 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (paginationRequest.Filter != null) query = query.ToFilter(paginationRequest.Filter);
         if (orderBy != null) query = orderBy(query);
         if (paginationRequest.Sorts != null) query = query.ToSort(paginationRequest.Sorts);
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return await query.ToPaginateAsync(paginationRequest, cancellationToken);
     }
@@ -884,12 +884,12 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (paginationRequest.Filter != null) query = query.ToFilter(paginationRequest.Filter);
         if (orderBy != null) query = orderBy(query);
         if (paginationRequest.Sorts != null) query = query.ToSort(paginationRequest.Sorts);
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return await query.Select(select).ToPaginateAsync(paginationRequest, cancellationToken);
     }
@@ -905,12 +905,12 @@ public class RepositoryBase<TEntity, TContext> : IRepository<TEntity>, IReposito
     {
         var query = _context.Set<TEntity>().AsQueryable().AsNoTracking();
 
+        if (ignoreFilters) query = query.IgnoreQueryFilters();
         if (where != null) query = query.Where(where);
         if (paginationRequest.Filter != null) query = query.ToFilter(paginationRequest.Filter);
         if (orderBy != null) query = orderBy(query);
         if (paginationRequest.Sorts != null) query = query.ToSort(paginationRequest.Sorts);
         if (include != null) query = include(query);
-        if (ignoreFilters) query = query.IgnoreQueryFilters();
 
         return await query.ProjectTo<TResult>(configurationProvider).ToPaginateAsync(paginationRequest, cancellationToken);
     }

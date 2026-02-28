@@ -98,7 +98,7 @@ public class BlogCommentController : BaseController
     [HttpGet]
     public async Task<IActionResult> Restore(Guid id)
     {
-        var result = await _blogCommentService.UndoDeleteAsync(id);
+        var result = await _blogCommentService.RestoreAsync(id);
         return ToAction(result);
     }
     #endregion

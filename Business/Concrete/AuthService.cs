@@ -58,7 +58,7 @@ public class AuthService : IAuthService
             return Result<LoginResponse>.Failure(message: "The email address or password was wrong.", metadata: Meta("Requester Email", loginRequest.Email));
 
         // 2) Check password
-        SignInResult checkPassword = await _signInManager.CheckPasswordSignInAsync(user, loginRequest.Password, lockoutOnFailure: false);
+        SignInResult checkPassword = await _signInManager.CheckPasswordSignInAsync(user, loginRequest.Password, lockoutOnFailure: true);
         if (!checkPassword.Succeeded)
         {
             if (checkPassword.IsLockedOut)
@@ -139,7 +139,7 @@ public class AuthService : IAuthService
 
             // 2) Create new user
             var user = _mapper.Map<User>(signUpRequest);
-            user.UserName = Guid.NewGuid().ToString();
+            user.UserName = signUpRequest.Email;
             var result = await _userManager.CreateAsync(user, signUpRequest.Password);
             if (!result.Succeeded)
                 return Result<SignUpResponse>.Failure(description: $"User cannot be created.", metadata: Meta(("Requester Email", signUpRequest.Email), ("Identity Service Errors", result)));
@@ -238,7 +238,7 @@ public class AuthService : IAuthService
             // 3) Find user
             var user = await _unitOfWork.Users.GetAsync(where: f => f.Id == refreshAuthRequest.UserId, cancellationToken: cancellationToken);
             if (user == null)
-                return Result<RefreshAuthResponse>.Failure(description: "User cannot found for refresh auth, userId: {refreshAuthRequest.UserId}", metadata: Meta("Request Model", refreshAuthRequest));
+                return Result<RefreshAuthResponse>.Failure(description: $"User cannot found for refresh auth, userId: {refreshAuthRequest.UserId}", metadata: Meta("Request Model", refreshAuthRequest));
 
             // 4) Update refresh token 
             string tokenValue = _tokenService.GenerateRandomNumber();

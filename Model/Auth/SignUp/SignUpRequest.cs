@@ -3,7 +3,7 @@ using FluentValidation;
 
 namespace Model.Auth.SignUp;
 
-public abstract class SignUpRequest
+public class SignUpRequest
 {
     public string Email { get; set; } = null!;
     

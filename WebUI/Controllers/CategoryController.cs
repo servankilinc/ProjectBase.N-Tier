@@ -78,7 +78,7 @@ public class CategoryController : BaseController
     [HttpGet]
     public async Task<IActionResult> Restore(Guid id)
     {
-        var result = await _categoryService.UndoDeleteAsync(id);
+        var result = await _categoryService.RestoreAsync(id);
         return ToAction(result);
     }
     #endregion

@@ -99,7 +99,7 @@ public class BlogController : BaseController
     [HttpGet]
     public async Task<IActionResult> Restore(Guid id)
     {
-        var result = await _blogService.UndoDeleteAsync(id);
+        var result = await _blogService.RestoreAsync(id);
         return ToAction(result);
     }
     #endregion

@@ -43,7 +43,7 @@ public interface IBlogService
 
     #region Delete
     Task<Result> DeleteAsync(Guid Id, CancellationToken cancellationToken = default);
-    Task<Result> UndoDeleteAsync(Guid Id, CancellationToken cancellationToken = default);
+    Task<Result> RestoreAsync(Guid Id, CancellationToken cancellationToken = default);
     #endregion
 
     #region Pagination

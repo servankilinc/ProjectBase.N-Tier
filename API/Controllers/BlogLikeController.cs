@@ -71,7 +71,7 @@ public class BlogLikeController : BaseController
     #endregion
 
     #region Update
-    [HttpGet]
+    [HttpGet("update")]
     public async Task<IActionResult> Update(Guid blogId, Guid userId)
     {
         var result = await _blogLikeService.GetAsync(BlogId: blogId, UserId: userId);

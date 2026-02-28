@@ -78,8 +78,8 @@
 
         // ****** FlatPicker Congifrations If Exist ******
         AutoInitFlatPicker(modal);
-        //// ****** select2 Congifrations If Exist ******
-        //AutoInitSelect2(modal);
+        // ****** select2 Congifrations If Exist ******
+        AutoInitSelect2(modal);
         //// ****** FlatPicker Congifrations If Exist ******
         //AutoInitDatePicker(modal);
 

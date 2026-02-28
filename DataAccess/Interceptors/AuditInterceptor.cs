@@ -35,6 +35,9 @@ public sealed class AuditInterceptor : SaveChangesInterceptor
                 {
                     entry.Entity.UpdatedBy = requesterId.IsSuccess ? requesterId.Data : string.Empty;
                     entry.Entity.UpdateDateUtc = DateTime.UtcNow;
+
+                    entry.Property(nameof(IAuditableEntity.CreatedBy)).IsModified = false;
+                    entry.Property(nameof(IAuditableEntity.CreateDateUtc)).IsModified = false;
                 }
             }
         }
@@ -67,6 +70,9 @@ public sealed class AuditInterceptor : SaveChangesInterceptor
                 {
                     entry.Entity.UpdatedBy = requesterId.IsSuccess ? requesterId.Data : string.Empty;
                     entry.Entity.UpdateDateUtc = DateTime.UtcNow;
+
+                    entry.Property(nameof(IAuditableEntity.CreatedBy)).IsModified = false;
+                    entry.Property(nameof(IAuditableEntity.CreateDateUtc)).IsModified = false;
                 }
             }
         }

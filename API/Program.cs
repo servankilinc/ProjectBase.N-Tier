@@ -53,7 +53,6 @@ builder.Services.AddRateLimiter(options =>
 
 
 #region ------- Layer Registrations -------
-builder.Services.AddModelServices();
 builder.Services.AddCoreServices(builder);
 builder.Services.AddDataAccessServices(builder.Configuration);
 builder.Services.AddBusinessServices(builder.Configuration);

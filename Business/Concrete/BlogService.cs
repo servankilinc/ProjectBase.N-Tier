@@ -192,7 +192,7 @@ public class BlogService : ServiceBase<Blog, IBlogRepository>, IBlogService
         return result;
     }
 
-    public async Task<Result> UndoDeleteAsync(Guid Id, CancellationToken cancellationToken = default)
+    public async Task<Result> RestoreAsync(Guid Id, CancellationToken cancellationToken = default)
     {
         var result = await base.UndoDeleteAsync(where: f => f.Id == Id, cancellationToken);
         return result;

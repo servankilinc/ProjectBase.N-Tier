@@ -3,7 +3,7 @@ using FluentValidation;
 
 namespace Model.Auth.Login;
 
-public abstract class LoginRequest
+public class LoginRequest
 {
     public string Email { get; set; } = null!;
 

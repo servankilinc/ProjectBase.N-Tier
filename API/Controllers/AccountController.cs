@@ -8,7 +8,6 @@ using Model.Auth.SignUp;
 namespace API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
 public class AccountController : BaseController
 {
     private readonly IAuthService _authService;

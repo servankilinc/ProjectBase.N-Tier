@@ -85,7 +85,7 @@ public class UserController : BaseController
     [HttpGet]
     public async Task<IActionResult> Restore(Guid id)
     {
-        var result = await _userService.UndoDeleteAsync(id);
+        var result = await _userService.RestoreAsync(id);
         return ToAction(result);
     }
     #endregion

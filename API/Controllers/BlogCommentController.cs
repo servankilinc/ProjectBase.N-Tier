@@ -70,7 +70,7 @@ public class BlogCommentController : BaseController
     #endregion
 
     #region Update
-    [HttpGet]
+    [HttpGet("update/{id:guid}")]
     public async Task<IActionResult> Update(Guid id)
     {
         var result = await _blogCommentService.GetUpdateModelAsync(id);
@@ -96,7 +96,7 @@ public class BlogCommentController : BaseController
     [HttpPatch("{id:guid}/restore")]
     public async Task<IActionResult> Restore(Guid id)
     {
-        var result = await _blogCommentService.UndoDeleteAsync(id);
+        var result = await _blogCommentService.RestoreAsync(id);
         return ToAction(result);
     }
     #endregion

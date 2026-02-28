@@ -69,7 +69,7 @@ public class CategoryController : BaseController
     #endregion
 
     #region Update
-    [HttpGet]
+    [HttpGet("update/{id:guid}")]
     public async Task<IActionResult> Update(Guid id)
     {
         var result = await _categoryService.GetUpdateModelAsync(id);
@@ -95,7 +95,7 @@ public class CategoryController : BaseController
     [HttpPatch("{id:guid}/restore")]
     public async Task<IActionResult> Restore(Guid id)
     {
-        var result = await _categoryService.UndoDeleteAsync(id);
+        var result = await _categoryService.RestoreAsync(id);
         return ToAction(result);
     }
     #endregion

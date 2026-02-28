@@ -44,48 +44,52 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-///**
-// * Select2 Auto Initilaze
-// */
-//function AutoInitSelect2(parentElement)
-//{
-//    if (parentElement == undefined) {
-//        const elemensOfSelect2 = document.querySelectorAll('.autoInitSelect2');
+/**
+ * Select2 Auto Initilaze
+ */
+function AutoInitSelect2(parentElement)
+{
+    if (parentElement == undefined) {
+        const elemensOfSelect2 = document.querySelectorAll('.autoInitSelect2');
 
-//        if (elemensOfSelect2 != null && elemensOfSelect2.length != undefined && elemensOfSelect2.length > 0) {
-//            elemensOfSelect2.forEach((selec2) => {
-//                $(selec2).select2({
-//                    placeholder: 'Select an option',
-//                    allowClear: true,
-//                    closeOnSelect: true
-//                }).on('select2:open', function () {
-//                    document.querySelector('.select2-container--open .select2-search__field').focus();
-//                });
-//            });
-//        }
-//    }
-//    else {
-//        const elemensOfSelect2 = parentElement.find(".autoInitSelect2");
+        if (elemensOfSelect2 != null && elemensOfSelect2.length != undefined && elemensOfSelect2.length > 0) {
+            elemensOfSelect2.forEach((selec2) => {
+                if ($(selec2).attr('data-select2-id') == null) {
+                    $(selec2).select2({
+                        placeholder: 'Select an option',
+                        allowClear: true,
+                        closeOnSelect: true
+                    }).on('select2:open', function () {
+                        document.querySelector('.select2-container--open .select2-search__field').focus();
+                    });
+                }
+            });
+        }
+    }
+    else {
+        const elemensOfSelect2 = parentElement.find(".autoInitSelect2");
 
-//        if (elemensOfSelect2 != null && elemensOfSelect2.length != undefined && elemensOfSelect2.length > 0) {
-//            elemensOfSelect2.map((index, selec2) => {
-//                $(selec2).select2({
-//                    dropdownParent: parentElement,
-//                    placeholder: 'Select an option',
-//                    allowClear: true,
-//                    closeOnSelect: true
-//                }).on('select2:open', function () {
-//                    document.querySelector('.select2-container--open .select2-search__field').focus();
-//                });
-//            });
-//        }
-//    }
-//}
-//document.addEventListener('DOMContentLoaded', function () {
-//    (function () {
-//        AutoInitSelect2();
-//    })();
-//});
+        if (elemensOfSelect2 != null && elemensOfSelect2.length != undefined && elemensOfSelect2.length > 0) {
+            elemensOfSelect2.map((index, selec2) => {
+                if ($(selec2).attr('data-select2-id') == null) {
+                    $(selec2).select2({
+                        dropdownParent: parentElement,
+                        placeholder: 'Select an option',
+                        allowClear: true,
+                        closeOnSelect: true
+                    }).on('select2:open', function () {
+                        document.querySelector('.select2-container--open .select2-search__field').focus();
+                    });
+                }
+            });
+        }
+    }
+}
+document.addEventListener('DOMContentLoaded', function () {
+    (function () {
+        AutoInitSelect2();
+    })();
+});
 
 
 

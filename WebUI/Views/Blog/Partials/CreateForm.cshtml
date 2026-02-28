@@ -10,7 +10,7 @@
 			<label asp-for="CreateModel.AuthorId" class="form-label">
 				Author
 			</label>
-			<select asp-for="CreateModel.AuthorId" asp-items="Model.AuthorIds" class="autoInitSelect2 form-select form-control-solid">
+			<select asp-for="CreateModel.AuthorId" asp-items="Model.AuthorIds" class="autoInitSelect2 form-select form-control-solid" data-control="select2" data-allow-clear="true">
 				<option></option>
 			</select>
 			<span asp-validation-for="CreateModel.AuthorId"></span>
