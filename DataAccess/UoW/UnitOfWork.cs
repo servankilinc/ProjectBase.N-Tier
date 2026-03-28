@@ -27,7 +27,8 @@ public class UnitOfWork : IUnitOfWork
         IBlogLikeRepository blogLikeRepository,
         IBlogCommentRepository blogCommentRepository,
         IRefreshTokenRepository refreshTokens
-    ){
+    )
+    {
         _context = context;
         Users = userRepository;
         Blogs = blogRepository;
@@ -46,31 +47,24 @@ public class UnitOfWork : IUnitOfWork
 
     public void BeginTransaction()
     {
-        if (_transaction != null) 
-            throw new InvalidOperationException("Transaction already started for begin transaction.");
-
+        if (_transaction != null) throw new InvalidOperationException("Transaction already started for begin transaction.");
         _transaction = _context.Database.BeginTransaction();
     }
 
     public void CommitTransaction()
     {
-        if (_transaction == null) 
-            throw new InvalidOperationException("Transaction has not been started for commit transaction.");
-
+        if (_transaction == null) throw new InvalidOperationException("Transaction has not been started for commit transaction.");
         _transaction.Commit();
-
         _transaction.Dispose();
         _transaction = null;
     }
 
     public void RollbackTransaction()
     {
-        if (_transaction != null)
-        {
-            _transaction.Rollback();
-            _transaction.Dispose();
-            _transaction = null;
-        }
+        if (_transaction == null) throw new InvalidOperationException("Transaction has not been started for rollback.");
+        _transaction.Rollback();
+        _transaction.Dispose();
+        _transaction = null;
     }
     #endregion
 
@@ -83,31 +77,24 @@ public class UnitOfWork : IUnitOfWork
 
     public async Task BeginTransactionAsync(CancellationToken cancellationToken = default)
     {
-        if (_transaction != null)
-            throw new InvalidOperationException("Transaction already started for begin transaction.");
-
+        if (_transaction != null) throw new InvalidOperationException("Transaction already started for begin transaction.");
         _transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
     }
 
     public async Task CommitTransactionAsync(CancellationToken cancellationToken = default)
     {
-        if (_transaction == null) 
-            throw new InvalidOperationException("Transaction has not been started for commit.");
-
+        if (_transaction == null) throw new InvalidOperationException("Transaction has not been started for commit.");
         await _transaction.CommitAsync(cancellationToken);
-
         await _transaction.DisposeAsync();
         _transaction = null;
     }
 
     public async Task RollbackTransactionAsync(CancellationToken cancellationToken = default)
     {
-        if (_transaction != null)
-        {
-            await _transaction.RollbackAsync(cancellationToken);
-            await _transaction.DisposeAsync();
-            _transaction = null;
-        }
+        if (_transaction == null) throw new InvalidOperationException("Transaction has not been started for rollback.");
+        await _transaction.RollbackAsync(cancellationToken);
+        await _transaction.DisposeAsync();
+        _transaction = null;
     }
     #endregion
 

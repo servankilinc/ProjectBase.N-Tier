@@ -266,7 +266,6 @@ public class AuthService : IAuthService
                 {
                     AccessToken = accessToken.Data,
                     RefreshToken = tokenValue,
-                    User = _mapper.Map<UserBasicResponseDto>(user),
                     Roles = roles
                 });
             }
@@ -276,7 +275,6 @@ public class AuthService : IAuthService
                 return Result<RefreshAuthResponse>.Success(new RefreshAuthResponse
                 {
                     AccessToken = accessToken.Data,
-                    User = _mapper.Map<UserBasicResponseDto>(user),
                     Roles = roles
                 });
             }

@@ -27,6 +27,10 @@ public interface IRepositoryAsync<TEntity> where TEntity : IEntity
     Task DeleteAndSaveAsync(Expression<Func<TEntity, bool>> where, CancellationToken cancellationToken = default);
     #endregion
 
+    #region Restore
+    Task RestoreAndSaveAsync(Expression<Func<TEntity, bool>> where, CancellationToken cancellationToken = default);
+    #endregion
+
     #region IsExist & Count
     Task<bool> IsExistAsync(
         Filter? filter = null,

@@ -1,133 +1,182 @@
 ﻿using AutoMapper;
 using Business.Abstract;
-using Business.ServiceBase;
 using Core.BaseRequestModels;
 using Core.Utils.Datatable;
 using Core.Utils.Pagination;
 using Core.Utils.ResultPattern;
 using Core.Utils.Validation;
-using DataAccess.Abstract;
 using DataAccess.UoW;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Model.Dtos.Category.Commands;
 using Model.Dtos.User.Commands;
 using Model.Entities;
 using System.Linq.Expressions;
 
 namespace Business.Concrete;
 
-public class UserService : ServiceBase<User, IUserRepository>, IUserService
+public class UserService : IUserService
 {
-    public UserService(IUnitOfWork unitOfWork, IValidationService validationService, IMapper mapper) : base(unitOfWork.Users, validationService, mapper)
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IValidationService _validationService;
+    private readonly IMapper _mapper;
+    public UserService(IUnitOfWork unitOfWork, IValidationService validationService, IMapper mapper)
     {
+        _unitOfWork = unitOfWork;
+        _validationService = validationService;
+        _mapper = mapper;
     }
 
     #region Get
     public async Task<Result<User>> GetAsync(Expression<Func<User, bool>> where, CancellationToken cancellationToken = default)
     {
-        var result = await base.GetAsync(
+        var result = await _unitOfWork.Users.GetAsync(
             where: where,
             cancellationToken: cancellationToken
         );
-        return result;
+
+        if (result == null)
+            return Result<User>.NotFound();
+
+        return Result<User>.Success(result);
     }
 
     public async Task<Result<User>> GetAsync(Guid Id, CancellationToken cancellationToken = default)
     {
-        var result = await base.GetAsync(
+        var result = await _unitOfWork.Users.GetAsync(
             where: f => f.Id == Id,
             cancellationToken: cancellationToken
         );
-        return result;
+
+        if (result == null)
+            return Result<User>.NotFound();
+
+        return Result<User>.Success(result);
     }
 
     public async Task<Result<UserBasicResponseDto>> GetBasicAsync(Guid Id, CancellationToken cancellationToken = default)
     {
-        var result = await base.GetAsync<UserBasicResponseDto>(
+        var result = await _unitOfWork.Users.GetAsync<UserBasicResponseDto>(
+            configurationProvider: _mapper.ConfigurationProvider,
             where: f => f.Id == Id,
             cancellationToken: cancellationToken
         );
-        return result;
+
+        if (result == null)
+            return Result<UserBasicResponseDto>.NotFound();
+
+        return Result<UserBasicResponseDto>.Success(result);
     }
 
     public async Task<Result<UserDetailResponseDto>> GetDetailAsync(Guid Id, CancellationToken cancellationToken = default)
     {
-        var result = await base.GetAsync<UserDetailResponseDto>(
+        var result = await _unitOfWork.Users.GetAsync<UserDetailResponseDto>(
+            configurationProvider: _mapper.ConfigurationProvider,
             where: f => f.Id == Id,
             cancellationToken: cancellationToken
         );
-        return result;
+
+        if (result == null)
+            return Result<UserDetailResponseDto>.NotFound();
+
+        return Result<UserDetailResponseDto>.Success(result);
     }
 
     public async Task<Result<UserBlogsResponseDto>> GetUserBlogsResponseDtoAsync(Guid Id, CancellationToken cancellationToken = default)
     {
-        var result = await base.GetAsync<UserBlogsResponseDto>(
+        var result = await _unitOfWork.Users.GetAsync<UserBlogsResponseDto>(
+            configurationProvider: _mapper.ConfigurationProvider,
             where: f => f.Id == Id,
             include: i => i.Include(x => x.Blogs),
             cancellationToken: cancellationToken
         );
-        return result;
+
+        if (result == null)
+            return Result<UserBlogsResponseDto>.NotFound();
+
+        return Result<UserBlogsResponseDto>.Success(result);
     }
     #endregion
 
     #region Get List
     public async Task<Result<ICollection<User>>> GetListAsync(Expression<Func<User, bool>>? where = null, CancellationToken cancellationToken = default)
     {
-        var result = await base.GetListAsync(
+        var result = await _unitOfWork.Users.GetAllAsync(
             where: where,
             cancellationToken: cancellationToken
         );
-        return result;
+
+        if (result == null)
+            return Result<ICollection<User>>.NotFound();
+
+        return Result<ICollection<User>>.Success(result);
     }
 
     public async Task<Result<ICollection<User>>> GetListAsync(DynamicRequest? request, CancellationToken cancellationToken = default)
     {
-        var result = await base.GetListAsync(
+        var result = await _unitOfWork.Users.GetAllAsync(
             filter: request?.Filter,
             sorts: request?.Sorts,
             tracking: false,
             cancellationToken: cancellationToken
         );
-        return result;
+
+        if (result == null)
+            return Result<ICollection<User>>.NotFound();
+
+        return Result<ICollection<User>>.Success(result);
     }
 
     public async Task<Result<ICollection<UserBasicResponseDto>>> GetBasicListAsync(DynamicRequest? request, CancellationToken cancellationToken = default)
     {
-        var result = await base.GetListAsync<UserBasicResponseDto>(
+        var result = await _unitOfWork.Users.GetAllAsync<UserBasicResponseDto>(
+            configurationProvider: _mapper.ConfigurationProvider,
             filter: request?.Filter,
             sorts: request?.Sorts,
             cancellationToken: cancellationToken
         );
-        return result;
+
+        if (result == null)
+            return Result<ICollection<UserBasicResponseDto>>.NotFound();
+
+        return Result<ICollection<UserBasicResponseDto>>.Success(result);
     }
 
     public async Task<Result<ICollection<UserDetailResponseDto>>> GetDetailListAsync(DynamicRequest? request, CancellationToken cancellationToken = default)
     {
-        var result = await base.GetListAsync<UserDetailResponseDto>(
+        var result = await _unitOfWork.Users.GetAllAsync<UserDetailResponseDto>(
+            configurationProvider: _mapper.ConfigurationProvider,
             filter: request?.Filter,
             sorts: request?.Sorts,
             cancellationToken: cancellationToken
         );
-        return result;
+
+        if (result == null)
+            return Result<ICollection<UserDetailResponseDto>>.NotFound();
+
+        return Result<ICollection<UserDetailResponseDto>>.Success(result);
     }
 
     public async Task<Result<ICollection<UserBlogsResponseDto>>> GetUserBlogsResponseDtoListAsync(DynamicRequest? request, CancellationToken cancellationToken = default)
     {
-        var result = await base.GetListAsync<UserBlogsResponseDto>(
+        var result = await _unitOfWork.Users.GetAllAsync<UserBlogsResponseDto>(
+            configurationProvider: _mapper.ConfigurationProvider,
             filter: request?.Filter,
             sorts: request?.Sorts,
             include: i => i.Include(x => x.Blogs),
             cancellationToken: cancellationToken
         );
-        return result;
+
+        if (result == null)
+            return Result<ICollection<UserBlogsResponseDto>>.NotFound();
+
+        return Result<ICollection<UserBlogsResponseDto>>.Success(result);
     }
     #endregion
 
     #region SelectList
     public async Task<Result<SelectList>> SelectListAsync(Expression<Func<User, bool>>? where = default, CancellationToken cancellationToken = default)
     {
-        var list = await base.GetListAsync(
+        var list = await _unitOfWork.Users.GetAllAsync<object>(
             select: s => new
             {
                 s.Id,
@@ -136,7 +185,7 @@ public class UserService : ServiceBase<User, IUserRepository>, IUserService
             where: where,
             cancellationToken: cancellationToken
         );
-        var selectList = new SelectList(list.Data ?? new List<object>(), "Id", "Name");
+        var selectList = new SelectList(list ?? new List<object>(), "Id", "Name");
 
         return Result<SelectList>.Success(selectList);
     }
@@ -161,24 +210,42 @@ public class UserService : ServiceBase<User, IUserRepository>, IUserService
         //}
         //return _mapper.Map<UserDto>(user);
 
-        var result = await base.CreateAsync<UserCreateDto, UserBasicResponseDto>(request, cancellationToken);
-        return result;
+        var validationResult = await _validationService.ValidateAsync(request, cancellationToken);
+        if (!validationResult.IsValid)
+            return Result<UserBasicResponseDto>.Validation(validationResult.Failures, description: $"Validation failed for UserCreateDto");
+
+        var result = await _unitOfWork.Users.AddAndSaveAsync(_mapper.Map<User>(request), cancellationToken);
+        return Result<UserBasicResponseDto>.Success(_mapper.Map<UserBasicResponseDto>(result));
     }
     #endregion
 
     #region Update
     public async Task<Result<UserUpdateDto>> GetUpdateModelAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var result = await base.GetAsync<UserUpdateDto>(
+        var result = await _unitOfWork.Users.GetAsync<UserUpdateDto>(
+            configurationProvider: _mapper.ConfigurationProvider,
             where: f => f.Id == id,
             cancellationToken: cancellationToken
         );
-        return result;
+
+        if (result == null)
+            return Result<UserUpdateDto>.NotFound();
+
+        return Result<UserUpdateDto>.Success(result);
     }
     public async Task<Result<UserBasicResponseDto>> UpdateAsync(UserUpdateDto request, CancellationToken cancellationToken = default)
     {
-        var result = await base.UpdateAsync<UserUpdateDto, UserBasicResponseDto>(updateModel: request, where: f => f.Id == request.Id, cancellationToken);
-        return result;
+        var validationResult = await _validationService.ValidateAsync(request, cancellationToken);
+        if (!validationResult.IsValid)
+            return Result<UserBasicResponseDto>.Validation(validationResult.Failures);
+
+        var entity = await _unitOfWork.Users.GetAsync(where: f => f.Id == request.Id, cancellationToken: cancellationToken);
+        if (entity == null)
+            return Result<UserBasicResponseDto>.NotFound();
+
+        var result = await _unitOfWork.Users.UpdateAndSaveAsync(_mapper.Map(request, entity), cancellationToken);
+        return Result<UserBasicResponseDto>.Success(_mapper.Map<UserBasicResponseDto>(result));
+
         // try
         // {
         //     await _unitOfWork.BeginTransactionAsync(cancellationToken);
@@ -228,54 +295,57 @@ public class UserService : ServiceBase<User, IUserRepository>, IUserService
     #region Delete
     public async Task<Result> DeleteAsync(Guid Id, CancellationToken cancellationToken = default)
     {
-        var result = await base.DeleteAsync(where: f => f.Id == Id, cancellationToken);
-        return result;
+        await _unitOfWork.Users.DeleteAndSaveAsync(where: f => f.Id == Id, cancellationToken);
+        return Result.Success(); ;
     }
 
     public async Task<Result> RestoreAsync(Guid Id, CancellationToken cancellationToken = default)
     {
-        var result = await base.UndoDeleteAsync(where: f => f.Id == Id, cancellationToken);
-        return result;
+        await _unitOfWork.Users.RestoreAndSaveAsync(where: f => f.Id == Id, cancellationToken);
+        return Result.Success();
     }
     #endregion
 
     #region Pagination
     public async Task<Result<PaginationResponse<User>>> PaginationAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
     {
-        var result = await base.PaginationAsync(
+        var result = await _unitOfWork.Users.PaginationAsync(
             paginationRequest: request,
             cancellationToken: cancellationToken
         );
-        return result;
+        return Result<PaginationResponse<User>>.Success(result);
     }
 
     public async Task<Result<PaginationResponse<UserReportDto>>> PaginationReportAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
     {
-        var result = await base.PaginationAsync<UserReportDto>(
+        var result = await _unitOfWork.Users.PaginationAsync<UserReportDto>(
+            configurationProvider: _mapper.ConfigurationProvider,
             paginationRequest: request,
             cancellationToken: cancellationToken
         );
-        return result;
+        return Result<PaginationResponse<UserReportDto>>.Success(result);
     }
     #endregion
 
     #region Datatable
     public async Task<Result<DatatableResponseClientSide<UserReportDto>>> DatatableClientSideAsync(DynamicDatatableRequest request, CancellationToken cancellationToken = default)
     {
-        var result = await base.DatatableClientSideAsync<UserReportDto>(
+        var result = await _unitOfWork.Users.DatatableClientSideAsync<UserReportDto>(
+            configurationProvider: _mapper.ConfigurationProvider,
             datatableRequest: request,
             cancellationToken: cancellationToken
         );
-        return result;
+        return Result<DatatableResponseClientSide<UserReportDto>>.Success(result);
     }
 
     public async Task<Result<DatatableResponseServerSide<UserReportDto>>> DatatableServerSideAsync(DynamicDatatableRequest request, CancellationToken cancellationToken = default)
     {
-        var result = await base.DatatableServerSideAsync<UserReportDto>(
+        var result = await _unitOfWork.Users.DatatableServerSideAsync<UserReportDto>(
+            configurationProvider: _mapper.ConfigurationProvider,
             datatableRequest: request,
             cancellationToken: cancellationToken
         );
-        return result;
+        return Result<DatatableResponseServerSide<UserReportDto>>.Success(result);
     }
     #endregion
 }
