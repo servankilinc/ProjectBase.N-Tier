@@ -1,20 +1,19 @@
 ﻿using AutoMapper;
-using Business.Abstract;
-using Business.Utils.TokenService;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Identity;
 using Core.Enums;
+using BlogApp.Core.Utils;
 using Core.Utils.Auth;
 using Core.Utils.HttpContextManager;
 using Core.Utils.ResultPattern;
 using Core.Utils.Validation;
 using DataAccess.UoW;
-using Microsoft.AspNetCore.Identity;
 using Model.Auth.Login;
 using Model.Auth.Refresh;
 using Model.Auth.SignUp;
-using Model.Dtos.User.Commands;
 using Model.Entities;
-using System.Security.Claims;
-using static Core.Utils.GlobalExtensions;
+using Business.Abstract;
+using Business.Utils.TokenService;
 
 namespace Business.Concrete;
 
@@ -53,26 +52,34 @@ public class AuthService : IAuthService
             return Result<LoginResponse>.Validation(validationResult.Failures);
 
         // 1) Find user by credentials
-        User? user = await _userManager.FindByEmailAsync(loginRequest.Email);
+        User? user = null;
+        if (loginRequest.Email != null)
+        {
+            user = await _userManager.FindByEmailAsync(loginRequest.Email);
+        }
+        else if (loginRequest.UserName != null)
+        {
+            user = await _userManager.FindByNameAsync(loginRequest.UserName);
+        }
         if (user == null)
-            return Result<LoginResponse>.Failure(message: "The email address or password was wrong.", metadata: Meta("Requester Email", loginRequest.Email));
+            return Result<LoginResponse>.Failure(message: "Credentials are incorrect.", metadata: GlobalExtensions.Meta("Requester Email or Username", loginRequest.Email ?? loginRequest.UserName));
 
         // 2) Check password
         SignInResult checkPassword = await _signInManager.CheckPasswordSignInAsync(user, loginRequest.Password, lockoutOnFailure: true);
         if (!checkPassword.Succeeded)
         {
             if (checkPassword.IsLockedOut)
-                return Result<LoginResponse>.Failure(message: "Your account is temporarily locked due to multiple failed login attempts.", metadata: Meta("Requester Email", loginRequest.Email));
+                return Result<LoginResponse>.Failure(message: "Your account is temporarily locked due to multiple failed login attempts.", metadata: GlobalExtensions.Meta("Requester Email", loginRequest.Email));
             if (checkPassword.RequiresTwoFactor)
-                return Result<LoginResponse>.Failure(message: "Two-factor authentication is required to login.", metadata: Meta("Requester Email", loginRequest.Email));
+                return Result<LoginResponse>.Failure(message: "Two-factor authentication is required to login.", metadata: GlobalExtensions.Meta("Requester Email", loginRequest.Email));
             if (checkPassword.IsNotAllowed)
-                return Result<LoginResponse>.Failure(message: "The user is not allowed to sign in.", metadata: Meta("Requester Email", loginRequest.Email));
-            return Result<LoginResponse>.Failure(message: "The email address or password was wrong.", metadata: Meta("Requester Email", loginRequest.Email));
+                return Result<LoginResponse>.Failure(message: "The user is not allowed to sign in.", metadata: GlobalExtensions.Meta("Requester Email", loginRequest.Email));
+            return Result<LoginResponse>.Failure(message: "Credentials are incorrect.", metadata: GlobalExtensions.Meta("Requester Email or Username", loginRequest.Email ?? loginRequest.UserName));
         }
 
         if (!await _signInManager.CanSignInAsync(user))
         {
-            return Result<LoginResponse>.Failure(message: "You are not allowed to login.", metadata: Meta("User", user));
+            return Result<LoginResponse>.Failure(message: "You are not allowed to login.", metadata: GlobalExtensions.Meta("User", user));
         }
 
         // 3) Get user roles and claims
@@ -82,13 +89,12 @@ public class AuthService : IAuthService
         // 3) Generate Access Token and Refresh Token
         Result<AccessToken> accessToken = _tokenService.GenerateAccessToken(claims);
         if (!accessToken.IsSuccess)
-            return Result<LoginResponse>.Failure(description: "Access token could not generated", metadata: Meta("Access Token Result", accessToken));
-
+            return Result<LoginResponse>.Failure(description: "Access token could not generated", metadata: GlobalExtensions.Meta("Access Token Result", accessToken));
 
         string tokenValue = _tokenService.GenerateRandomNumber();
         Result<RefreshToken> refreshToken = _tokenService.GenerateRefreshToken(user, tokenValue, loginRequest.ClientType, loginRequest.DeviceId);
         if (!refreshToken.IsSuccess)
-            return Result<LoginResponse>.Failure(description: "Refresh token could not generated", metadata: Meta("Refresh Token Result", refreshToken));
+            return Result<LoginResponse>.Failure(description: "Refresh token could not generated", metadata: GlobalExtensions.Meta("Refresh Token Result", refreshToken));
 
         // 4) Save Refresh Token and Revoke old ones if deviceId is provided
         if (loginRequest.DeviceId != null && loginRequest.DeviceId.HasValue)
@@ -104,7 +110,7 @@ public class AuthService : IAuthService
                 AccessToken = accessToken.Data,
                 RefreshToken = tokenValue,
                 DeviceId = refreshToken.Data.DeviceId,
-                User = _mapper.Map<UserBasicResponseDto>(user),
+                //User = user,
                 Roles = roles
             });
         }
@@ -115,12 +121,11 @@ public class AuthService : IAuthService
             {
                 AccessToken = accessToken.Data,
                 DeviceId = refreshToken.Data.DeviceId,
-                User = _mapper.Map<UserBasicResponseDto>(user),
+                //User = user,
                 Roles = roles
             });
         }
     }
-
 
     public async Task<Result<SignUpResponse>> SignUpAsync(SignUpRequest signUpRequest, CancellationToken cancellationToken = default)
     {
@@ -135,19 +140,22 @@ public class AuthService : IAuthService
             // 1) Check if user already exists
             var userExist = await _userManager.FindByEmailAsync(signUpRequest.Email);
             if (userExist != null)
-                return Result<SignUpResponse>.Failure(message: "The email address is already in use.", metadata: Meta("Request Email", signUpRequest.Email));
+                return Result<SignUpResponse>.Failure(message: "The email address is already in use.", metadata: GlobalExtensions.Meta("Request Email", signUpRequest.Email));
+
+            userExist = await _userManager.FindByNameAsync(signUpRequest.Email);
+            if (userExist != null)
+                return Result<SignUpResponse>.Failure(message: "The user name is already in use.", metadata: GlobalExtensions.Meta("Request User Name", signUpRequest.UserName));
 
             // 2) Create new user
             var user = _mapper.Map<User>(signUpRequest);
-            user.UserName = signUpRequest.Email;
             var result = await _userManager.CreateAsync(user, signUpRequest.Password);
             if (!result.Succeeded)
-                return Result<SignUpResponse>.Failure(description: $"User cannot be created.", metadata: Meta(("Requester Email", signUpRequest.Email), ("Identity Service Errors", result)));
+                return Result<SignUpResponse>.Failure(description: $"User cannot be created.", metadata: GlobalExtensions.Meta(("Requester Email", signUpRequest.Email), ("Identity Service Errors", result)));
 
             // 3) Assign "User" role to the new user
             var roleResult = await _userManager.AddToRoleAsync(user, "User");
             if (!roleResult.Succeeded)
-                return Result<SignUpResponse>.Failure(description: $"Failed to assign role", metadata: Meta(("Requester Email", signUpRequest.Email), ("Identity Service Errors", roleResult)));
+                return Result<SignUpResponse>.Failure(description: $"Failed to assign role", metadata: GlobalExtensions.Meta(("Requester Email", signUpRequest.Email), ("Identity Service Errors", roleResult)));
 
             // 4) Get user roles and claims
             IList<string> roles = await _userManager.GetRolesAsync(user);
@@ -156,12 +164,12 @@ public class AuthService : IAuthService
             // 5) Generate Access Token and Refresh Token
             Result<AccessToken> accessToken = _tokenService.GenerateAccessToken(claims);
             if (!accessToken.IsSuccess)
-                return Result<SignUpResponse>.Failure(description: "Access token could not generated", metadata: Meta("Access Token Result", accessToken));
+                return Result<SignUpResponse>.Failure(description: "Access token could not generated", metadata: GlobalExtensions.Meta("Access Token Result", accessToken));
 
             string tokenValue = _tokenService.GenerateRandomNumber();
             Result<RefreshToken> refreshToken = _tokenService.GenerateRefreshToken(user, tokenValue, signUpRequest.ClientType, signUpRequest.DeviceId);
             if (!refreshToken.IsSuccess)
-                return Result<SignUpResponse>.Failure(description: "Refresh token could not generated", metadata: Meta("Refresh Token Result", refreshToken));
+                return Result<SignUpResponse>.Failure(description: "Refresh token could not generated", metadata: GlobalExtensions.Meta("Refresh Token Result", refreshToken));
 
             // 6) Save Refresh Token and Revoke old ones if deviceId is provided
             if (signUpRequest.DeviceId != null && signUpRequest.DeviceId.HasValue)
@@ -180,7 +188,7 @@ public class AuthService : IAuthService
                     AccessToken = accessToken.Data,
                     RefreshToken = tokenValue,
                     DeviceId = refreshToken.Data.DeviceId,
-                    User = _mapper.Map<UserBasicResponseDto>(user),
+                    //User = user,
                     Roles = roles,
                 });
             }
@@ -191,7 +199,7 @@ public class AuthService : IAuthService
                 {
                     AccessToken = accessToken.Data,
                     DeviceId = refreshToken.Data.DeviceId,
-                    User = _mapper.Map<UserBasicResponseDto>(user),
+                    //User = user,
                     Roles = roles,
                 });
             }
@@ -218,7 +226,7 @@ public class AuthService : IAuthService
             {
                 var cookieValue = _httpContextManager.GetRefreshTokenFromCookie();
                 if (!cookieValue.IsSuccess)
-                    return Result<RefreshAuthResponse>.Failure(description: "Refresh auth request cookie not found in cookie", metadata: Meta("Cookie Result", cookieValue.Error.Description));
+                    return Result<RefreshAuthResponse>.Failure(description: "Refresh auth request cookie not found in cookie", metadata: GlobalExtensions.Meta("Cookie Result", cookieValue.Error.Description));
                 refreshAuthRequest.RefreshToken = cookieValue.Data;
             }
             string hashedToken = _tokenService.HashToken(refreshAuthRequest.RefreshToken);
@@ -231,14 +239,15 @@ public class AuthService : IAuthService
                 f.TTL > 0 &&
                 f.IsRevoked == false &&
                 f.ExpirationUtc > DateTime.UtcNow,
-                cancellationToken: cancellationToken);
+                cancellationToken: cancellationToken
+            );
             if (refreshToken == null)
-                return Result<RefreshAuthResponse>.Failure(description: "There is no refresh token that can be used.", metadata: Meta("Request Model", refreshAuthRequest));
+                return Result<RefreshAuthResponse>.Failure(description: "There is no refresh token that can be used.", metadata: GlobalExtensions.Meta("Request Model", refreshAuthRequest));
 
             // 3) Find user
             var user = await _unitOfWork.Users.GetAsync(where: f => f.Id == refreshAuthRequest.UserId, cancellationToken: cancellationToken);
             if (user == null)
-                return Result<RefreshAuthResponse>.Failure(description: $"User cannot found for refresh auth, userId: {refreshAuthRequest.UserId}", metadata: Meta("Request Model", refreshAuthRequest));
+                return Result<RefreshAuthResponse>.Failure(description: $"User cannot found for refresh auth, userId: {refreshAuthRequest.UserId}", metadata: GlobalExtensions.Meta("Request Model", refreshAuthRequest));
 
             // 4) Update refresh token 
             string tokenValue = _tokenService.GenerateRandomNumber();
@@ -256,7 +265,7 @@ public class AuthService : IAuthService
             // 7) Generate new access token
             Result<AccessToken> accessToken = _tokenService.GenerateAccessToken(claims);
             if (!accessToken.IsSuccess)
-                return Result<RefreshAuthResponse>.Failure(description: "Access token could not generated", metadata: Meta("Access Token Result", accessToken));
+                return Result<RefreshAuthResponse>.Failure(description: "Access token could not generated", metadata: GlobalExtensions.Meta("Access Token Result", accessToken));
 
             await _unitOfWork.CommitTransactionAsync(cancellationToken);
 

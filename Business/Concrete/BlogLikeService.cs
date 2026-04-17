@@ -158,30 +158,30 @@ public class BlogLikeService : IBlogLikeService
     #endregion
 
     #region Create
-    public async Task<Result<BlogLikeResponseDto>> CreateAsync(BlogLikeCreateDto request, CancellationToken cancellationToken = default)
+    public async Task<Result> CreateAsync(BlogLikeCreateDto request, CancellationToken cancellationToken = default)
     {
         var validationResult = await _validationService.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
-            return Result<BlogLikeResponseDto>.Validation(validationResult.Failures, description: $"Validation failed for BlogLikeCreateDto");
+            return Result.Validation(validationResult.Failures, description: $"Validation failed for BlogLikeCreateDto");
 
-        var result = await _unitOfWork.BlogLikes.AddAndSaveAsync(_mapper.Map<BlogLike>(request), cancellationToken);
-        return Result<BlogLikeResponseDto>.Success(_mapper.Map<BlogLikeResponseDto>(result));
+        await _unitOfWork.BlogLikes.AddAndSaveAsync(_mapper.Map<BlogLike>(request), cancellationToken);
+        return Result.Success();
     }
     #endregion
 
     #region Update
-    public async Task<Result<BlogLikeResponseDto>> UpdateAsync(BlogLike request, CancellationToken cancellationToken = default)
+    public async Task<Result> UpdateAsync(BlogLike request, CancellationToken cancellationToken = default)
     {
         var validationResult = await _validationService.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
-            return Result<BlogLikeResponseDto>.Validation(validationResult.Failures, description: $"Validation failed for BlogLike");
+            return Result.Validation(validationResult.Failures, description: $"Validation failed for BlogLike");
 
         var entity = await _unitOfWork.BlogLikes.GetAsync(where: f => f.UserId == request.UserId && f.BlogId == request.BlogId, cancellationToken: cancellationToken);
         if (entity == null)
-            return Result<BlogLikeResponseDto>.NotFound();
+            return Result.NotFound();
 
-        var result = await _unitOfWork.BlogLikes.UpdateAndSaveAsync(_mapper.Map(request, entity), cancellationToken);
-        return Result<BlogLikeResponseDto>.Success(_mapper.Map<BlogLikeResponseDto>(result));
+        await _unitOfWork.BlogLikes.UpdateAndSaveAsync(_mapper.Map(request, entity), cancellationToken);
+        return Result.Success();
     }
     #endregion
 

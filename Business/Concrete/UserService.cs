@@ -192,7 +192,7 @@ public class UserService : IUserService
     #endregion
 
     #region Create
-    public async Task<Result<UserBasicResponseDto>> CreateAsync(UserCreateDto request, CancellationToken cancellationToken = default)
+    public async Task<Result> CreateAsync(UserCreateDto request, CancellationToken cancellationToken = default)
     {
         //var userExist = await _userManager.FindByNameAsync(request.UserName);
         //if (userExist != null)
@@ -212,10 +212,10 @@ public class UserService : IUserService
 
         var validationResult = await _validationService.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
-            return Result<UserBasicResponseDto>.Validation(validationResult.Failures, description: $"Validation failed for UserCreateDto");
+            return Result.Validation(validationResult.Failures, description: $"Validation failed for UserCreateDto");
 
-        var result = await _unitOfWork.Users.AddAndSaveAsync(_mapper.Map<User>(request), cancellationToken);
-        return Result<UserBasicResponseDto>.Success(_mapper.Map<UserBasicResponseDto>(result));
+        await _unitOfWork.Users.AddAndSaveAsync(_mapper.Map<User>(request), cancellationToken);
+        return Result.Success();
     }
     #endregion
 
@@ -233,18 +233,18 @@ public class UserService : IUserService
 
         return Result<UserUpdateDto>.Success(result);
     }
-    public async Task<Result<UserBasicResponseDto>> UpdateAsync(UserUpdateDto request, CancellationToken cancellationToken = default)
+    public async Task<Result> UpdateAsync(UserUpdateDto request, CancellationToken cancellationToken = default)
     {
         var validationResult = await _validationService.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
-            return Result<UserBasicResponseDto>.Validation(validationResult.Failures);
+            return Result.Validation(validationResult.Failures);
 
         var entity = await _unitOfWork.Users.GetAsync(where: f => f.Id == request.Id, cancellationToken: cancellationToken);
         if (entity == null)
-            return Result<UserBasicResponseDto>.NotFound();
+            return Result.NotFound();
 
-        var result = await _unitOfWork.Users.UpdateAndSaveAsync(_mapper.Map(request, entity), cancellationToken);
-        return Result<UserBasicResponseDto>.Success(_mapper.Map<UserBasicResponseDto>(result));
+        await _unitOfWork.Users.UpdateAndSaveAsync(_mapper.Map(request, entity), cancellationToken);
+        return Result.Success();
 
         // try
         // {
@@ -307,16 +307,7 @@ public class UserService : IUserService
     #endregion
 
     #region Pagination
-    public async Task<Result<PaginationResponse<User>>> PaginationAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
-    {
-        var result = await _unitOfWork.Users.PaginationAsync(
-            paginationRequest: request,
-            cancellationToken: cancellationToken
-        );
-        return Result<PaginationResponse<User>>.Success(result);
-    }
-
-    public async Task<Result<PaginationResponse<UserReportDto>>> PaginationReportAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<PaginationResponse<UserReportDto>>> PaginationAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
     {
         var result = await _unitOfWork.Users.PaginationAsync<UserReportDto>(
             configurationProvider: _mapper.ConfigurationProvider,

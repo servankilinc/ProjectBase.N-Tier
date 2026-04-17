@@ -31,11 +31,11 @@ public interface IBlogLikeService
     #endregion
 
     #region Create
-    Task<Result<BlogLikeResponseDto>> CreateAsync(BlogLikeCreateDto request, CancellationToken cancellationToken = default);
+    Task<Result> CreateAsync(BlogLikeCreateDto request, CancellationToken cancellationToken = default);
     #endregion
 
     #region Update
-    Task<Result<BlogLikeResponseDto>> UpdateAsync(BlogLike request, CancellationToken cancellationToken = default);
+    Task<Result> UpdateAsync(BlogLike request, CancellationToken cancellationToken = default);
     #endregion
 
     #region Delete

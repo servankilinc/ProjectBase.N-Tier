@@ -31,12 +31,12 @@ public interface IBlogCommentService
     #endregion
 
     #region Create
-    Task<Result<BlogCommentBasicResponseDto>> CreateAsync(BlogCommentCreateDto request, CancellationToken cancellationToken = default);
+    Task<Result> CreateAsync(BlogCommentCreateDto request, CancellationToken cancellationToken = default);
     #endregion
 
     #region Update
     Task<Result<BlogCommentUpdateDto>> GetUpdateModelAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<Result<BlogCommentBasicResponseDto>> UpdateAsync(BlogCommentUpdateDto request, CancellationToken cancellationToken = default);
+    Task<Result> UpdateAsync(BlogCommentUpdateDto request, CancellationToken cancellationToken = default);
     #endregion
 
     #region Delete
@@ -45,8 +45,7 @@ public interface IBlogCommentService
     #endregion
 
     #region Pagination
-    Task<Result<PaginationResponse<BlogComment>>> PaginationAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default);
-    Task<Result<PaginationResponse<BlogCommentReportDto>>> PaginationReportAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default);
+    Task<Result<PaginationResponse<BlogCommentReportDto>>> PaginationAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default);
     #endregion
 
     #region Datatable

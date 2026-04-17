@@ -32,12 +32,12 @@ public interface IUserService
     #endregion
 
     #region Create
-    Task<Result<UserBasicResponseDto>> CreateAsync(UserCreateDto request, CancellationToken cancellationToken = default);
+    Task<Result> CreateAsync(UserCreateDto request, CancellationToken cancellationToken = default);
     #endregion
 
     #region Update
     Task<Result<UserUpdateDto>> GetUpdateModelAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<Result<UserBasicResponseDto>> UpdateAsync(UserUpdateDto request, CancellationToken cancellationToken = default);
+    Task<Result> UpdateAsync(UserUpdateDto request, CancellationToken cancellationToken = default);
     #endregion
 
     #region Delete
@@ -46,8 +46,7 @@ public interface IUserService
     #endregion
 
     #region Pagination
-    Task<Result<PaginationResponse<User>>> PaginationAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default);
-    Task<Result<PaginationResponse<UserReportDto>>> PaginationReportAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default);
+    Task<Result<PaginationResponse<UserReportDto>>> PaginationAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default);
     #endregion
 
     #region Datatable

@@ -167,14 +167,14 @@ public class BlogCommentService : IBlogCommentService
     #endregion
 
     #region Create
-    public async Task<Result<BlogCommentBasicResponseDto>> CreateAsync(BlogCommentCreateDto request, CancellationToken cancellationToken = default)
+    public async Task<Result> CreateAsync(BlogCommentCreateDto request, CancellationToken cancellationToken = default)
     {
         var validationResult = await _validationService.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
-            return Result<BlogCommentBasicResponseDto>.Validation(validationResult.Failures, description: $"Validation failed for BlogCommentBasicResponseDto");
+            return Result.Validation(validationResult.Failures, description: $"Validation failed for BlogCommentBasicResponseDto");
 
-        var result = await _unitOfWork.BlogComments.AddAndSaveAsync(_mapper.Map<BlogComment>(request), cancellationToken);
-        return Result<BlogCommentBasicResponseDto>.Success(_mapper.Map<BlogCommentBasicResponseDto>(result));
+        await _unitOfWork.BlogComments.AddAndSaveAsync(_mapper.Map<BlogComment>(request), cancellationToken);
+        return Result.Success();
     }
     #endregion
 
@@ -193,18 +193,18 @@ public class BlogCommentService : IBlogCommentService
         return Result<BlogCommentUpdateDto>.Success(result);
     }
 
-    public async Task<Result<BlogCommentBasicResponseDto>> UpdateAsync(BlogCommentUpdateDto request, CancellationToken cancellationToken = default)
+    public async Task<Result> UpdateAsync(BlogCommentUpdateDto request, CancellationToken cancellationToken = default)
     {
         var validationResult = await _validationService.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
-            return Result<BlogCommentBasicResponseDto>.Validation(validationResult.Failures);
+            return Result.Validation(validationResult.Failures);
 
         var entity = await _unitOfWork.BlogComments.GetAsync(where: f => f.Id == request.Id, cancellationToken: cancellationToken);
         if (entity == null)
-            return Result<BlogCommentBasicResponseDto>.NotFound();
+            return Result.NotFound();
 
-        var result = await _unitOfWork.BlogComments.UpdateAndSaveAsync(_mapper.Map(request, entity), cancellationToken);
-        return Result<BlogCommentBasicResponseDto>.Success(_mapper.Map<BlogCommentBasicResponseDto>(result));
+        await _unitOfWork.BlogComments.UpdateAndSaveAsync(_mapper.Map(request, entity), cancellationToken);
+        return Result.Success();
     }
     #endregion
 
@@ -223,16 +223,7 @@ public class BlogCommentService : IBlogCommentService
     #endregion
 
     #region Pagination
-    public async Task<Result<PaginationResponse<BlogComment>>> PaginationAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
-    {
-        var result = await _unitOfWork.BlogComments.PaginationAsync(
-            paginationRequest: request,
-            cancellationToken: cancellationToken
-        );
-        return Result<PaginationResponse<BlogComment>>.Success(result);
-    }
-
-    public async Task<Result<PaginationResponse<BlogCommentReportDto>>> PaginationReportAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<PaginationResponse<BlogCommentReportDto>>> PaginationAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
     {
         var result = await _unitOfWork.BlogComments.PaginationAsync<BlogCommentReportDto>(
             configurationProvider: _mapper.ConfigurationProvider,

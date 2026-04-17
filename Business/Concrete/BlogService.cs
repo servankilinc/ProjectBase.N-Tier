@@ -211,14 +211,14 @@ public class BlogService : IBlogService
     #endregion
 
     #region Create
-    public async Task<Result<BlogBasicResponseDto>> CreateAsync(BlogCreateDto request, CancellationToken cancellationToken = default)
+    public async Task<Result> CreateAsync(BlogCreateDto request, CancellationToken cancellationToken = default)
     {
         var validationResult = await _validationService.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
-            return Result<BlogBasicResponseDto>.Validation(validationResult.Failures, description: $"Validation failed for BlogCommentBasicResponseDto");
+            return Result.Validation(validationResult.Failures, description: $"Validation failed for BlogCommentBasicResponseDto");
 
-        var result = await _unitOfWork.Blogs.AddAndSaveAsync(_mapper.Map<Blog>(request), cancellationToken);
-        return Result<BlogBasicResponseDto>.Success(_mapper.Map<BlogBasicResponseDto>(result));
+        await _unitOfWork.Blogs.AddAndSaveAsync(_mapper.Map<Blog>(request), cancellationToken);
+        return Result.Success();
     }
     #endregion
 
@@ -237,7 +237,7 @@ public class BlogService : IBlogService
         return Result<BlogUpdateDto>.Success(result);
     }
 
-    public async Task<Result<BlogBasicResponseDto>> UpdateAsync(BlogUpdateDto request, CancellationToken cancellationToken = default)
+    public async Task<Result> UpdateAsync(BlogUpdateDto request, CancellationToken cancellationToken = default)
     {
         var validationResult = await _validationService.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
@@ -267,16 +267,7 @@ public class BlogService : IBlogService
     #endregion
 
     #region Pagination
-    public async Task<Result<PaginationResponse<Blog>>> PaginationAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
-    {
-        var result = await _unitOfWork.Blogs.PaginationAsync(
-            paginationRequest: request,
-            cancellationToken: cancellationToken
-        );
-        return Result<PaginationResponse<Blog>>.Success(result);
-    }
-
-    public async Task<Result<PaginationResponse<BlogReportDto>>> PaginationReportAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<PaginationResponse<BlogReportDto>>> PaginationAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
     {
         var result = await _unitOfWork.Blogs.PaginationAsync<BlogReportDto>(
             configurationProvider: _mapper.ConfigurationProvider,

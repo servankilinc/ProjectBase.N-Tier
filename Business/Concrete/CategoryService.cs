@@ -166,14 +166,14 @@ public class CategoryService : ICategoryService
     #endregion
 
     #region Create
-    public async Task<Result<CategoryResponseDto>> CreateAsync(CategoryCreateDto request, CancellationToken cancellationToken = default)
+    public async Task<Result> CreateAsync(CategoryCreateDto request, CancellationToken cancellationToken = default)
     {
         var validationResult = await _validationService.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
-            return Result<CategoryResponseDto>.Validation(validationResult.Failures, description: $"Validation failed for CategoryResponseDto");
+            return Result.Validation(validationResult.Failures, description: $"Validation failed for CategoryResponseDto");
 
-        var result = await _unitOfWork.Categories.AddAndSaveAsync(_mapper.Map<Category>(request), cancellationToken);
-        return Result<CategoryResponseDto>.Success(_mapper.Map<CategoryResponseDto>(result));
+        await _unitOfWork.Categories.AddAndSaveAsync(_mapper.Map<Category>(request), cancellationToken);
+        return Result.Success();
     }
     #endregion
 
@@ -191,18 +191,18 @@ public class CategoryService : ICategoryService
 
         return Result<CategoryUpdateDto>.Success(result);
     }
-    public async Task<Result<CategoryResponseDto>> UpdateAsync(CategoryUpdateDto request, CancellationToken cancellationToken = default)
+    public async Task<Result> UpdateAsync(CategoryUpdateDto request, CancellationToken cancellationToken = default)
     {
         var validationResult = await _validationService.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
-            return Result<CategoryResponseDto>.Validation(validationResult.Failures);
+            return Result.Validation(validationResult.Failures);
 
         var entity = await _unitOfWork.Categories.GetAsync(where: f => f.Id == request.Id, cancellationToken: cancellationToken);
         if (entity == null)
-            return Result<CategoryResponseDto>.NotFound();
+            return Result.NotFound();
 
-        var result = await _unitOfWork.Categories.UpdateAndSaveAsync(_mapper.Map(request, entity), cancellationToken);
-        return Result<CategoryResponseDto>.Success(_mapper.Map<CategoryResponseDto>(result));
+        await _unitOfWork.Categories.UpdateAndSaveAsync(_mapper.Map(request, entity), cancellationToken);
+        return Result.Success();
     }
     #endregion
 
@@ -221,16 +221,7 @@ public class CategoryService : ICategoryService
     #endregion
 
     #region Pagination
-    public async Task<Result<PaginationResponse<Category>>> PaginationAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
-    {
-        var result = await _unitOfWork.Categories.PaginationAsync(
-            paginationRequest: request,
-            cancellationToken: cancellationToken
-        );
-        return Result<PaginationResponse<Category>>.Success(result);
-    }
-
-    public async Task<Result<PaginationResponse<CategoryReportDto>>> PaginationReportAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<PaginationResponse<CategoryReportDto>>> PaginationAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default)
     {
         var result = await _unitOfWork.Categories.PaginationAsync<CategoryReportDto>(
             configurationProvider: _mapper.ConfigurationProvider,

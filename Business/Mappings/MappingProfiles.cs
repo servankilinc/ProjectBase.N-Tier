@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Model.Entities;
 using Model.Auth.SignUp;
 using Model.Dtos.Blog.Commands;
 using Model.Dtos.Blog.Queries;
@@ -9,7 +10,6 @@ using Model.Dtos.BlogLike.Queries;
 using Model.Dtos.Category.Commands;
 using Model.Dtos.Category.Queries;
 using Model.Dtos.User.Commands;
-using Model.Entities;
 
 namespace Business.Mappings;
 

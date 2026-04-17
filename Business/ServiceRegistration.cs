@@ -1,8 +1,8 @@
-﻿using Business.Abstract;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using Business.Abstract;
 using Business.Concrete;
 using Business.Utils.TokenService;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Business;
 

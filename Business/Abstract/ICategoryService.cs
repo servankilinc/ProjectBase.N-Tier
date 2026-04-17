@@ -31,12 +31,12 @@ public interface ICategoryService
     #endregion
 
     #region Create
-    Task<Result<CategoryResponseDto>> CreateAsync(CategoryCreateDto request, CancellationToken cancellationToken = default);
+    Task<Result> CreateAsync(CategoryCreateDto request, CancellationToken cancellationToken = default);
     #endregion
 
     #region Update
     Task<Result<CategoryUpdateDto>> GetUpdateModelAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<Result<CategoryResponseDto>> UpdateAsync(CategoryUpdateDto request, CancellationToken cancellationToken = default);
+    Task<Result> UpdateAsync(CategoryUpdateDto request, CancellationToken cancellationToken = default);
     #endregion
 
     #region Delete
@@ -45,8 +45,7 @@ public interface ICategoryService
     #endregion
 
     #region Pagination
-    Task<Result<PaginationResponse<Category>>> PaginationAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default);
-    Task<Result<PaginationResponse<CategoryReportDto>>> PaginationReportAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default);
+    Task<Result<PaginationResponse<CategoryReportDto>>> PaginationAsync(DynamicPaginationRequest request, CancellationToken cancellationToken = default);
     #endregion
 
     #region Datatable

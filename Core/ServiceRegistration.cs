@@ -82,10 +82,6 @@ public static class ServiceRegistration
             .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
             .MinimumLevel.Override("System", LogEventLevel.Warning)
             .Enrich.FromLogContext()
-            .Enrich.WithEnvironmentName()
-            .Enrich.WithMachineName()
-            .Enrich.WithThreadId()
-            .Enrich.WithProcessId()
             .WriteTo.Logger(lc => lc.Filter.ByIncludingOnly(e => e.Level == LogEventLevel.Information)
                 .WriteTo.Async(a => a.File(
                     path: "Logs/Information.log",
