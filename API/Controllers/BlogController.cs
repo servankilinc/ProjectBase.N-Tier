@@ -123,13 +123,6 @@ public class BlogController : BaseController
         var result = await _blogService.PaginationAsync(request);
         return ToAction(result);
     }
-
-    [HttpPost("pagination/report")]
-    public async Task<IActionResult> PaginationReport(DynamicPaginationRequest request)
-    {
-        var result = await _blogService.PaginationReportAsync(request);
-        return ToAction(result);
-    }
     #endregion
 
     #region Datatable

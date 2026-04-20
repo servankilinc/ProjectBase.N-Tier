@@ -84,34 +84,12 @@ public class CategoryController : BaseController
     }
     #endregion
 
-    #region Delete
-    [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id)
-    {
-        var result = await _categoryService.DeleteAsync(id);
-        return ToAction(result);
-    }
-
-    [HttpPatch("{id:guid}/restore")]
-    public async Task<IActionResult> Restore(Guid id)
-    {
-        var result = await _categoryService.RestoreAsync(id);
-        return ToAction(result);
-    }
-    #endregion
 
     #region Pagination
     [HttpPost("pagination")]
     public async Task<IActionResult> Pagination(DynamicPaginationRequest request)
     {
         var result = await _categoryService.PaginationAsync(request);
-        return ToAction(result);
-    }
-
-    [HttpPost("pagination/report")]
-    public async Task<IActionResult> PaginationReport(DynamicPaginationRequest request)
-    {
-        var result = await _categoryService.PaginationReportAsync(request);
         return ToAction(result);
     }
     #endregion

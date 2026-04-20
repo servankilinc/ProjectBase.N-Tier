@@ -121,13 +121,6 @@ public class UserController : BaseController
         var result = await _userService.PaginationAsync(request);
         return ToAction(result);
     }
-
-    [HttpPost("pagination/report")]
-    public async Task<IActionResult> PaginationReport(DynamicPaginationRequest request)
-    {
-        var result = await _userService.PaginationReportAsync(request);
-        return ToAction(result);
-    }
     #endregion
 
     #region Datatable

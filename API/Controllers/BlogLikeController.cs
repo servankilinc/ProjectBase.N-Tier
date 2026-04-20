@@ -96,7 +96,7 @@ public class BlogLikeController : BaseController
     #endregion
 
     #region Delete
-    [HttpPost("Delete")]
+    [HttpPost("delete")]
     public async Task<IActionResult> Delete(BlogLikeDeleteDto request)
     {
         await _blogLikeService.DeleteAsync(request);

@@ -1,19 +1,18 @@
-using API.ExceptionHandler;
-using API.Utils;
-using Business;
-using Core;
-using Core.Utils.Auth;
-using DataAccess;
-using DataAccess.Contexts;
-using FluentValidation;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
-using Model.Entities;
 using Scalar.AspNetCore;
-using System.Reflection;
-using System.Threading.RateLimiting;
+using FluentValidation;
+using Core;
+using Core.Utils.Auth;
+using Model.Entities;
+using DataAccess;
+using DataAccess.Contexts;
+using Business;
+using API.ExceptionHandler;
+using API.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
 

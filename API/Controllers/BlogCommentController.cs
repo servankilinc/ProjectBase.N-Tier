@@ -108,13 +108,6 @@ public class BlogCommentController : BaseController
         var result = await _blogCommentService.PaginationAsync(request);
         return ToAction(result);
     }
-
-    [HttpPost("pagination/report")]
-    public async Task<IActionResult> PaginationReport(DynamicPaginationRequest request)
-    {
-        var result = await _blogCommentService.PaginationReportAsync(request);
-        return ToAction(result);
-    }
     #endregion
 
     #region Datatable
